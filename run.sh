@@ -1,5 +1,8 @@
 #!/bin/bash
 
+rm *.png
+rm *.dot
+
 ghc Graph.hs
 
 ./Graph
@@ -8,5 +11,12 @@ ghc Graph.hs
 
 # call graphviz on each .dot file.
 # -O automatically names the files bw-graph-01-images.dot --> bw-graph-01-images.dot.svg
-neato -O -Tsvg *-images.dot
+neato -O -Tpng *-images.dot
+
+dot -O -Tpng final.dot
+
+# "Eye of Gnome" image viewer.
+# -s : slideshow view
+eog final.dot.png
+
 
