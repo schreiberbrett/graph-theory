@@ -9,7 +9,7 @@ import Data.List (sort, intercalate, any, nubBy)
 import Debug.Trace (trace)
 
 main :: IO ()
-main = writeAll2 quasiEdge
+main = writeAll2 threeWhite
 
 (\/) :: (Ord a) => Set a -> Set a -> Set a
 (\/) = Set.union
@@ -235,6 +235,17 @@ data Out a = DEF a a a
 leq :: (Ord a) => Gate (BWGraph a) -> Gate (BWGraph a) -> Bool
 leq g1 g2 = wVertices (out g1) `Set.isProperSubsetOf` wVertices (out g2)
 
+disjointMembers' :: (Ord a) => Set a -> Set a -> (Set a, Set a)
+disjointMembers' a b = go (Set.toList a) (Set.toList b) [] [] where
+    go [] []     d1 d2 = (Set.fromAscList d1, Set.fromAscList d2)
+    go (x:xs) [] d1 d2 = if x `Set.member` b then go xs [] d1 d2 else go xs [] (x:d1) d2
+    go [] (y:ys) d1 d2 = if y `Set.member` a then go [] ys d1 d2 else go [] ys d1 (y:d2)
+    go (x:xs) (y:ys) d1 d2 = go xs ys
+        ((if x `Set.member` b then id else (x:)) d1)
+        ((if y `Set.member` a then id else (y:)) d2)
+
+disjointMembers :: (Ord a) => Set a -> Set a -> (Set a, Set a)
+disjointMembers a b = (Set.filter (Set.notMember b) a, Set.filter (Set.notMember a) b)
 
 calc :: (Ord a) => Int -> Graph a -> Set (Gate (BWGraph a)) -> Set (Gate (BWGraph a)) -> Set (Gate (BWGraph a))
 calc 0 graph known new = known \/ new
@@ -612,3 +623,17 @@ tripleSpindle = fromWalks2 [
     (8, (3, 2)),
     (9, (3, 0))] $ [
     [0, 1, 3, 5, 7, 9, 8, 6, 2, 4, 0, 1, 5, 3, 7, 8, 9, 6, 4, 2, 0]]
+
+triplePentagon = fromWalks2 [
+    (0, (4, 2)),
+    (1, (2, 3)),
+    (2, (6, 3)),
+    (3, (4, 1)),
+    (4, (3, 4)),
+    (5, (5, 4)),
+    (6, (8, 2)),
+    (7, (7, 0)),
+    (8, (1, 0)),
+    (9, (0, 2))] $ [
+    [0, 1, 4, 5, 2, 0,2, 6, 7, 3, 0, 3, 8, 9, 1, 0, 1, 4, 5],
+    [5, 6, 7, 8, 9, 4]]
