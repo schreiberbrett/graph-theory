@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use second" #-}
 import qualified Data.Map as Map
 import Data.Map (Map)
 
@@ -76,10 +78,10 @@ fromEdgeList edges = Graph {
     }
 
 fromWalks2 :: (Ord a, Ord b) => [(a, b)] -> [[a]] -> Graph (a, b)
-fromWalks2 lookupTable walks = fromWalks $ map (\x -> map (\y -> (y, m Map.! y)) x) walks
+fromWalks2 lookupTable walks = fromWalks $ map (map (\y -> (y, m Map.! y))) walks
     where
       m = Map.fromList lookupTable
-      
+
 
 fromWalks :: (Ord a) => [[a]] -> Graph a
 fromWalks walks = fromEdgeList $ do
@@ -118,7 +120,7 @@ wVertices :: (Ord a) => BWGraph a -> Set a
 wVertices bwGraph = Map.keysSet
     $ Map.filter (== White)
     $ bwVertices bwGraph
-    
+
 bVertices :: (Ord a) => BWGraph a -> Set a
 bVertices bwGraph = Map.keysSet
     $ Map.filter (== Black)
@@ -151,7 +153,7 @@ merge (b1, o1, i1) (b2, o2, i2) = BWGraph {
     bwVertices = Map.mapWithKey (\v bw -> if v .< (i1 \/ i2) then Black else if v .< (o1 \/ o2) then White else bw) (Map.union (bwVertices b1) (bwVertices b2)),
     bwEdges = bwEdges b1 \/ bwEdges b2 \/ mkCBS i1 i2
     }
-    
+
 -- 
 
 e :: (Ord a) => Int -> Graph a -> [BWGraph a]
@@ -176,14 +178,14 @@ xi g known3s b1 b2 = map (uncurry merge)
         not $ Set.null i1,
         (o2, i2) <- partitions $ wVertices b2,
         not $ Set.null i2,
-        
+
         -- This may be as powerful as the last two (commented (?)) conditions
         disjoint o1 (bVertices b2),
         disjoint o2 (bVertices b1),
-        
+
         -- let i1i2 = i1 \/ i2
         -- Set.size i1i2 > (max (Set.size i1) (Set.size i2))
-        
+
         mutuallyDisjoint i1 i2 o1,
         mutuallyDisjoint i1 i2 o2,
         isCBS g i1 i2,
@@ -245,7 +247,7 @@ disjointMembers' a b = go (Set.toList a) (Set.toList b) [] [] where
         ((if y `Set.member` a then id else (y:)) d2)
 
 disjointMembers :: (Ord a) => Set a -> Set a -> (Set a, Set a)
-disjointMembers a b = (Set.filter (Set.notMember b) a, Set.filter (Set.notMember a) b)
+disjointMembers a b = (Set.filter (`Set.notMember` b) a, Set.filter (`Set.notMember` a) b)
 
 calc :: (Ord a) => Int -> Graph a -> Set (Gate (BWGraph a)) -> Set (Gate (BWGraph a)) -> Set (Gate (BWGraph a))
 calc 0 graph known new = known \/ new
@@ -254,9 +256,9 @@ calc n graph known new = if Set.null result
     else trace (show (Set.size result)) $ calc (n - 1) graph known_and_new result
     where
       result = Set.fromList
-          $ filter (\x -> not $ any (\y -> y `leq` x) iteration) -- keep only the smallest
-          $ iteration
-      
+          $ filter (\x -> not $ any (`leq` x) iteration) -- keep only the smallest
+          iteration
+
       iteration = [ Rec (Set.fromList [b1, b2]) x |
         b1 <- map out $ Set.toList known,
         b2 <- map out $ Set.toList new,
@@ -274,7 +276,7 @@ isUnusedOddCycle (Rec _ _) _ = False
 isUnusedOddCycle (Base g)  s = not $ any (isInput g) $ Set.toList s
 
 justMyFamily :: (Ord a) => Map (Set a) (Set a) -> a -> Map (Set a) (Set a)
-justMyFamily m x = case Map.minViewWithKey (Map.filter (\outs -> x .< outs) m) of
+justMyFamily m x = case Map.minViewWithKey (Map.filter (x .<) m) of
     Just ((ins, outs), _) -> Map.insert ins outs $ Map.unions $ map (justMyFamily m) $ Set.toList ins
     Nothing -> Map.empty
 
@@ -299,7 +301,7 @@ toGraphviz g = "graph G {\n" ++
 
 
     "}"
-    
+
 toGraphviz2 :: BWGraph (Integer, (Integer, Integer)) -> String
 toGraphviz2 g = "graph G {\n" ++
     "    overlap=false;\n" ++
@@ -324,9 +326,9 @@ toDigraph {-criteria-} graphs gates =
 
     -- visual version: the BW graphs are fully rendered
     unlines (map (\(_, name) -> "    " ++ name ++ " [image=\"bwgraph-" ++ name ++ "-images.dot.png\"];" ) $ Map.toList graphs) ++
-    
-    "    original -> penta -> {" ++ (intercalate ", " oddCycleNames) ++ "}\n" ++
-    
+
+    "    original -> penta -> {" ++ intercalate ", " oddCycleNames ++ "}\n" ++
+
 
     -- TODO (REDO) abstract version: just the symbols, not graphs
     -- unlines (map (\(_, name) -> "    " ++ name ++ " [shape=circle, label=\"" ++ name ++ "\"];" ) $ Map.toList graphs) ++
@@ -338,10 +340,10 @@ toDigraph {-criteria-} graphs gates =
 
     "}" where
       oddCycleNames = map (\(Base x) -> graphs Map.! x) $ filter (not . isRec) $ Set.toList gates
-      
+
       pairs = Map.toList (asMap gates)
       -- uncomment (and add `criteria` parameter) to clean up the tree -- just view one random BWGraph's family
-      
+
       {-
       pairs = Map.toList
           $ justMyFamily (asMap gates)
@@ -354,10 +356,10 @@ toDigraph {-criteria-} graphs gates =
 
 digraphString :: Set a -> Set a -> Int -> (a -> String) -> String
 -- with intermediate xi gate
-digraphString ins outs index name = "    " ++ group ins ++  " -> xi" ++ (show index) ++ " -> " ++ group outs ++ ";"
+digraphString ins outs index name = "    " ++ group ins ++  " -> xi" ++ show index ++ " -> " ++ group outs ++ ";"
      where
        group vertices = "{" ++ intercalate ", " (map name $ Set.toList vertices) ++ "}"
-       
+
 
 
 toMultimap :: (Ord a, Ord b) => [(a, b)] -> Map a (Set b)
@@ -454,7 +456,7 @@ tripleBowtie = fromWalks2 [
     (6, (3, 0)),
     (7, (5, 0)),
     (8, (4, 1))
-    ] $ [[0, 2, 4, 6, 8, 7, 5, 3, 1, 5, 7, 6, 4, 0]]
+    ] [[0, 2, 4, 6, 8, 7, 5, 3, 1, 5, 7, 6, 4, 0]]
 
 beginner = fromWalks [
     [0, 1, 2, 3, 4, 5], [0, 2], [3, 5]
@@ -472,8 +474,8 @@ tripleBowtieAndExtra = fromWalks2 [
     (8, (7, 2)),
     (9, (4, 1)),
     (10, (3, 0)),
-    (11, (5, 0))] $ [
-    [0, 6, 1, 2, 7, 3, 4, 8, 5, 8, 9, 11, 10, 9, 6, 1, 0], [2, 3, 4, 5], [7, 9]] 
+    (11, (5, 0))] [
+    [0, 6, 1, 2, 7, 3, 4, 8, 5, 8, 9, 11, 10, 9, 6, 1, 0], [2, 3, 4, 5], [7, 9]]
 
 boxedDiamond = fromWalks [
     [0, 1, 2, 3, 4, 5, 0],
@@ -498,12 +500,12 @@ doubleTree = fromWalks [
 
 diamondDiamondBackedge = fromWalks [
     [0, 1, 2, 3, 4, 5, 6, 0, 2, 1, 3, 5, 4, 6]]
-    
-    
+
+
 rearrangementLemma = fromWalks [
     [0, 1, 2, 0, 3, 4, 5, 6, 7, 3, 8, 9, 10, 11, 3],
     [6, 10]]
-    
+
 
 quasiEdge = fromWalks2 [
     (0, (0, 3)),
@@ -514,21 +516,21 @@ quasiEdge = fromWalks2 [
     (5, (1, 1)),
     (6, (2, 4)),
     (7, (2, 2)),
-    (8, (2, 8))] $ [
+    (8, (2, 8))] [
     [0, 2, 6, 4, 1, 3, 7, 5, 0], [0, 8, 1], [2, 4], [5, 3], [6, 7]]
-    
+
 quasiEdgeWithoutExtra = fromWalks [
     [0, 1, 2, 3, 4, 5, 6, 7, 0],
     [1, 3], [2, 6], [7, 5]]
-    
+
 k4 = fromWalks [
     [0, 1, 2, 3, 0], [1, 3], [2, 0]]
-    
-    
+
+
 deniz = fromWalks [
     [0, 1, 2, 3, 4, 5, 0], [1, 3, 5], [4, 2]]
-    
-    
+
+
 brett2 = fromWalks [
     [0, 1, 2, 3, 4, 5, 6, 7, 0], [0, 2, 4, 6, 0], [7, 8, 9, 7], [3, 10, 11, 3]]
 
@@ -538,8 +540,8 @@ diamond = fromWalks2 [
         (1, (1, 2)),
         (2, (1, 0)),
         (3, (2, 1))
-    ] $ [[0, 1, 2, 3, 1], [0, 2]]
-    
+    ] [[0, 1, 2, 3, 1], [0, 2]]
+
 iceCream = fromWalks [[0, 1, 2, 3, 4 ,5, 0], [5, 1]]
 
 threeWhite = fromWalks2 [
@@ -549,7 +551,7 @@ threeWhite = fromWalks2 [
         (3, (1, 2)),
         (4, (2, 1)),
         (5, (1, 0))
-    ] $ [
+    ] [
         [0, 1, 4, 5, 3, 2, 0], [2, 5], [3, 4]]
 
 wheel5 = fromWalks2 [
@@ -559,9 +561,9 @@ wheel5 = fromWalks2 [
         (3, (1, 0)),
         (4, (0, 2)),
         (5, (2, 1))
-    ] $ [
+    ] [
         [0, 1, 2, 3, 4, 0], [5, 0], [5, 1], [5, 2], [5, 3], [5, 4]]
-    
+
 
 moserSpindle = fromWalks2 [
     (0, (0, 0)),
@@ -571,9 +573,9 @@ moserSpindle = fromWalks2 [
     (4, (4, 1)),
     (5, (5, 2)),
     (6, (6, 0))
-    ] $ [[0, 1, 2, 3, 4, 5, 6, 0], [0, 2, 1, 3, 5, 4, 6]]
-    
-    
+    ] [[0, 1, 2, 3, 4, 5, 6, 0], [0, 2, 1, 3, 5, 4, 6]]
+
+
 fish = fromWalks2 [
     (0, (0, 2)),
     (1, (1, 4)),
@@ -582,10 +584,10 @@ fish = fromWalks2 [
     (4, (4, 4)),
     (5, (4, 0)),
     (6, (2, 1)),
-    (7, (1, 0))] $ [
+    (7, (1, 0))] [
         [0, 1, 2, 3, 4, 5, 3, 6, 7, 0],
         [2, 6]]
-        
+
 fishWithCycle = fromWalks2 [
     (0, (0, 2)),
     (1, (1, 4)),
@@ -594,11 +596,11 @@ fishWithCycle = fromWalks2 [
     (4, (4, 4)),
     (5, (4, 0)),
     (6, (2, 1)),
-    (7, (1, 0))] $ [
+    (7, (1, 0))] [
         [0, 1, 2, 3, 4, 5, 3, 6, 7, 0],
         [2, 6], [1, 4], [7, 5]]
-        
-        
+
+
 bug = fromWalks2 [
     (0, (1, 2)),
     (1, (3, 2)),
@@ -607,10 +609,10 @@ bug = fromWalks2 [
     (4, (4, 1)),
     (5, (0, 0)),
     (6, (2, 0)),
-    (7, (4, 0))] $ [
+    (7, (4, 0))] [
     [0, 1, 4, 7, 6, 5, 2, 0, 3, 1, 3, 6]]
-    
-    
+
+
 tripleSpindle = fromWalks2 [
     (0, (1, 4)),
     (1, (5, 4)),
@@ -621,7 +623,7 @@ tripleSpindle = fromWalks2 [
     (6, (1, 1)),
     (7, (5, 1)),
     (8, (3, 2)),
-    (9, (3, 0))] $ [
+    (9, (3, 0))] [
     [0, 1, 3, 5, 7, 9, 8, 6, 2, 4, 0, 1, 5, 3, 7, 8, 9, 6, 4, 2, 0]]
 
 triplePentagon = fromWalks2 [
@@ -634,6 +636,6 @@ triplePentagon = fromWalks2 [
     (6, (8, 2)),
     (7, (7, 0)),
     (8, (1, 0)),
-    (9, (0, 2))] $ [
+    (9, (0, 2))] [
     [0, 1, 4, 5, 2, 0,2, 6, 7, 3, 0, 3, 8, 9, 1, 0, 1, 4, 5],
     [5, 6, 7, 8, 9, 4]]
