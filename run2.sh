@@ -1,9 +1,11 @@
 #!/bin/bash
 
+# TODO: Convert this into a Makefile
+
 # mkdir -p makes if it does not already exist
 mkdir -p build_artifacts
 
-cp ProofTree.Internal.lhs build_artifacts/ProofTree.Internal.lhs
+cp Book.lhs build_artifacts/Book.lhs
 cd build_artifacts
 
 # clean up any previous build artifacts
@@ -11,9 +13,9 @@ rm *.svg
 rm *.png
 rm *.dot
 
-ghc ProofTree.Internal.lhs
+ghc Book.lhs
 
-./ProofTree.Internal
+./Book
 
 # This will produce some .dot files. bw-graph-01-images.dot bw-graph-02-images.dot ... etc.
 

@@ -1,0 +1,1247 @@
+\documentclass{article}
+%% ODER: format ==         = "\mathrel{==}"
+%% ODER: format /=         = "\neq "
+%
+%
+\makeatletter
+\@ifundefined{lhs2tex.lhs2tex.sty.read}%
+  {\@namedef{lhs2tex.lhs2tex.sty.read}{}%
+   \newcommand\SkipToFmtEnd{}%
+   \newcommand\EndFmtInput{}%
+   \long\def\SkipToFmtEnd#1\EndFmtInput{}%
+  }\SkipToFmtEnd
+
+\newcommand\ReadOnlyOnce[1]{\@ifundefined{#1}{\@namedef{#1}{}}\SkipToFmtEnd}
+\usepackage{amstext}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+\DeclareFontFamily{OT1}{cmtex}{}
+\DeclareFontShape{OT1}{cmtex}{m}{n}
+  {<5><6><7><8>cmtex8
+   <9>cmtex9
+   <10><10.95><12><14.4><17.28><20.74><24.88>cmtex10}{}
+\DeclareFontShape{OT1}{cmtex}{m}{it}
+  {<-> ssub * cmtt/m/it}{}
+\newcommand{\texfamily}{\fontfamily{cmtex}\selectfont}
+\DeclareFontShape{OT1}{cmtt}{bx}{n}
+  {<5><6><7><8>cmtt8
+   <9>cmbtt9
+   <10><10.95><12><14.4><17.28><20.74><24.88>cmbtt10}{}
+\DeclareFontShape{OT1}{cmtex}{bx}{n}
+  {<-> ssub * cmtt/bx/n}{}
+\newcommand{\tex}[1]{\text{\texfamily#1}}	% NEU
+
+\newcommand{\Sp}{\hskip.33334em\relax}
+
+
+\newcommand{\Conid}[1]{\mathit{#1}}
+\newcommand{\Varid}[1]{\mathit{#1}}
+\newcommand{\anonymous}{\kern0.06em \vbox{\hrule\@width.5em}}
+\newcommand{\plus}{\mathbin{+\!\!\!+}}
+\newcommand{\bind}{\mathbin{>\!\!\!>\mkern-6.7mu=}}
+\newcommand{\rbind}{\mathbin{=\mkern-6.7mu<\!\!\!<}}% suggested by Neil Mitchell
+\newcommand{\sequ}{\mathbin{>\!\!\!>}}
+\renewcommand{\leq}{\leqslant}
+\renewcommand{\geq}{\geqslant}
+\usepackage{polytable}
+
+%mathindent has to be defined
+\@ifundefined{mathindent}%
+  {\newdimen\mathindent\mathindent\leftmargini}%
+  {}%
+
+\def\resethooks{%
+  \global\let\SaveRestoreHook\empty
+  \global\let\ColumnHook\empty}
+\newcommand*{\savecolumns}[1][default]%
+  {\g@addto@macro\SaveRestoreHook{\savecolumns[#1]}}
+\newcommand*{\restorecolumns}[1][default]%
+  {\g@addto@macro\SaveRestoreHook{\restorecolumns[#1]}}
+\newcommand*{\aligncolumn}[2]%
+  {\g@addto@macro\ColumnHook{\column{#1}{#2}}}
+
+\resethooks
+
+\newcommand{\onelinecommentchars}{\quad-{}- }
+\newcommand{\commentbeginchars}{\enskip\{-}
+\newcommand{\commentendchars}{-\}\enskip}
+
+\newcommand{\visiblecomments}{%
+  \let\onelinecomment=\onelinecommentchars
+  \let\commentbegin=\commentbeginchars
+  \let\commentend=\commentendchars}
+
+\newcommand{\invisiblecomments}{%
+  \let\onelinecomment=\empty
+  \let\commentbegin=\empty
+  \let\commentend=\empty}
+
+\visiblecomments
+
+\newlength{\blanklineskip}
+\setlength{\blanklineskip}{0.66084ex}
+
+\newcommand{\hsindent}[1]{\quad}% default is fixed indentation
+\let\hspre\empty
+\let\hspost\empty
+\newcommand{\NB}{\textbf{NB}}
+\newcommand{\Todo}[1]{$\langle$\textbf{To do:}~#1$\rangle$}
+
+\EndFmtInput
+\makeatother
+%
+%
+%
+%
+%
+%
+% This package provides two environments suitable to take the place
+% of hscode, called "plainhscode" and "arrayhscode". 
+%
+% The plain environment surrounds each code block by vertical space,
+% and it uses \abovedisplayskip and \belowdisplayskip to get spacing
+% similar to formulas. Note that if these dimensions are changed,
+% the spacing around displayed math formulas changes as well.
+% All code is indented using \leftskip.
+%
+% Changed 19.08.2004 to reflect changes in colorcode. Should work with
+% CodeGroup.sty.
+%
+\ReadOnlyOnce{polycode.fmt}%
+\makeatletter
+
+\newcommand{\hsnewpar}[1]%
+  {{\parskip=0pt\parindent=0pt\par\vskip #1\noindent}}
+
+% can be used, for instance, to redefine the code size, by setting the
+% command to \small or something alike
+\newcommand{\hscodestyle}{}
+
+% The command \sethscode can be used to switch the code formatting
+% behaviour by mapping the hscode environment in the subst directive
+% to a new LaTeX environment.
+
+\newcommand{\sethscode}[1]%
+  {\expandafter\let\expandafter\hscode\csname #1\endcsname
+   \expandafter\let\expandafter\endhscode\csname end#1\endcsname}
+
+% "compatibility" mode restores the non-polycode.fmt layout.
+
+\newenvironment{compathscode}%
+  {\par\noindent
+   \advance\leftskip\mathindent
+   \hscodestyle
+   \let\\=\@normalcr
+   \let\hspre\(\let\hspost\)%
+   \pboxed}%
+  {\endpboxed\)%
+   \par\noindent
+   \ignorespacesafterend}
+
+\newcommand{\compaths}{\sethscode{compathscode}}
+
+% "plain" mode is the proposed default.
+% It should now work with \centering.
+% This required some changes. The old version
+% is still available for reference as oldplainhscode.
+
+\newenvironment{plainhscode}%
+  {\hsnewpar\abovedisplayskip
+   \advance\leftskip\mathindent
+   \hscodestyle
+   \let\hspre\(\let\hspost\)%
+   \pboxed}%
+  {\endpboxed%
+   \hsnewpar\belowdisplayskip
+   \ignorespacesafterend}
+
+\newenvironment{oldplainhscode}%
+  {\hsnewpar\abovedisplayskip
+   \advance\leftskip\mathindent
+   \hscodestyle
+   \let\\=\@normalcr
+   \(\pboxed}%
+  {\endpboxed\)%
+   \hsnewpar\belowdisplayskip
+   \ignorespacesafterend}
+
+% Here, we make plainhscode the default environment.
+
+\newcommand{\plainhs}{\sethscode{plainhscode}}
+\newcommand{\oldplainhs}{\sethscode{oldplainhscode}}
+\plainhs
+
+% The arrayhscode is like plain, but makes use of polytable's
+% parray environment which disallows page breaks in code blocks.
+
+\newenvironment{arrayhscode}%
+  {\hsnewpar\abovedisplayskip
+   \advance\leftskip\mathindent
+   \hscodestyle
+   \let\\=\@normalcr
+   \(\parray}%
+  {\endparray\)%
+   \hsnewpar\belowdisplayskip
+   \ignorespacesafterend}
+
+\newcommand{\arrayhs}{\sethscode{arrayhscode}}
+
+% The mathhscode environment also makes use of polytable's parray 
+% environment. It is supposed to be used only inside math mode 
+% (I used it to typeset the type rules in my thesis).
+
+\newenvironment{mathhscode}%
+  {\parray}{\endparray}
+
+\newcommand{\mathhs}{\sethscode{mathhscode}}
+
+% texths is similar to mathhs, but works in text mode.
+
+\newenvironment{texthscode}%
+  {\(\parray}{\endparray\)}
+
+\newcommand{\texths}{\sethscode{texthscode}}
+
+% The framed environment places code in a framed box.
+
+\def\codeframewidth{\arrayrulewidth}
+\RequirePackage{calc}
+
+\newenvironment{framedhscode}%
+  {\parskip=\abovedisplayskip\par\noindent
+   \hscodestyle
+   \arrayrulewidth=\codeframewidth
+   \tabular{@{}|p{\linewidth-2\arraycolsep-2\arrayrulewidth-2pt}|@{}}%
+   \hline\framedhslinecorrect\\{-1.5ex}%
+   \let\endoflinesave=\\
+   \let\\=\@normalcr
+   \(\pboxed}%
+  {\endpboxed\)%
+   \framedhslinecorrect\endoflinesave{.5ex}\hline
+   \endtabular
+   \parskip=\belowdisplayskip\par\noindent
+   \ignorespacesafterend}
+
+\newcommand{\framedhslinecorrect}[2]%
+  {#1[#2]}
+
+\newcommand{\framedhs}{\sethscode{framedhscode}}
+
+% The inlinehscode environment is an experimental environment
+% that can be used to typeset displayed code inline.
+
+\newenvironment{inlinehscode}%
+  {\(\def\column##1##2{}%
+   \let\>\undefined\let\<\undefined\let\\\undefined
+   \newcommand\>[1][]{}\newcommand\<[1][]{}\newcommand\\[1][]{}%
+   \def\fromto##1##2##3{##3}%
+   \def\nextline{}}{\) }%
+
+\newcommand{\inlinehs}{\sethscode{inlinehscode}}
+
+% The joincode environment is a separate environment that
+% can be used to surround and thereby connect multiple code
+% blocks.
+
+\newenvironment{joincode}%
+  {\let\orighscode=\hscode
+   \let\origendhscode=\endhscode
+   \def\endhscode{\def\hscode{\endgroup\def\@currenvir{hscode}\\}\begingroup}
+   %\let\SaveRestoreHook=\empty
+   %\let\ColumnHook=\empty
+   %\let\resethooks=\empty
+   \orighscode\def\hscode{\endgroup\def\@currenvir{hscode}}}%
+  {\origendhscode
+   \global\let\hscode=\orighscode
+   \global\let\endhscode=\origendhscode}%
+
+\makeatother
+\EndFmtInput
+%
+
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
+
+\title{Proof Complexity and 3COLOR}
+\author{Brett Schreiber}
+\date{ }
+  
+\begin{document}
+  
+\maketitle
+  
+\tableofcontents
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\mbox{\enskip\{-\# LANGUAGE DuplicateRecordFields  \#-\}\enskip}{}\<[E]%
+\\
+\>[B]{}\mbox{\enskip\{-\# LANGUAGE ScopedTypeVariables  \#-\}\enskip}{}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\mathbf{import}\;\Conid{\Conid{Data}.Set}\;(\Conid{Set}){}\<[E]%
+\\
+\>[B]{}\mathbf{import}\;\Varid{qualified}\;\Conid{\Conid{Data}.Set}\;\Varid{as}\;\Conid{Set}{}\<[E]%
+\\
+\>[B]{}\mathbf{import}\;\Conid{\Conid{Data}.Map}\;(\Conid{Map}){}\<[E]%
+\\
+\>[B]{}\mathbf{import}\;\Varid{qualified}\;\Conid{\Conid{Data}.Map}\;\Varid{as}\;\Conid{Map}{}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\mathbf{import}\;\Conid{\Conid{Debug}.Trace}\;(\Varid{trace}){}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+
+For notational convenience, we define a Graph to have a distinction between black and white vertices, and a distinction between solid and dotted edges. Since this is an undirected graph, ordered pairs are inappropriate, so a custom TwoSet is used instead.
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\mathbf{data}\;\Conid{BW}\mathrel{=}\Conid{Black}\mid \Conid{White}\;\mathbf{deriving}\;(\Conid{Eq},\Conid{Ord},\Conid{Show}){}\<[E]%
+\\
+\>[B]{}\mathbf{data}\;\Conid{SD}\mathrel{=}\Conid{Solid}\mid \Conid{Dotted}\;\mathbf{deriving}\;(\Conid{Eq},\Conid{Ord},\Conid{Show}){}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\mathbf{data}\;\Conid{Graph}\;\Varid{a}\mathrel{=}\Conid{Graph}\;\{\mskip1.5mu {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{vertices}\mathbin{::}\Conid{Map}\;\Varid{a}\;\Conid{BW},{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{edges}\mathbin{::}\{(\Conid{TwoSet}\;\Varid{a})\}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mskip1.5mu\}\;\mathbf{deriving}\;(\Conid{Eq},\Conid{Ord},\Conid{Show}){}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}(\cdot \sim\cdot ) \in \cdot \mathbin{::}\Conid{Ord}\;\Varid{a}\Rightarrow \Conid{Graph}\;\Varid{a}\to \Varid{a}\to \Varid{a}\to \Conid{Bool}{}\<[E]%
+\\
+\>[B]{}(\Varid{u}\sim\Varid{v}) \in \Varid{g}\mathrel{=}\Varid{wrap}\;\Varid{u}\;\Varid{v}\in \Varid{edges}\;\Varid{g}{}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\Varid{wVertices}\mathbin{::}(\Conid{Ord}\;\Varid{a})\Rightarrow \Conid{Graph}\;\Varid{a}\to \{\Varid{a}\}{}\<[E]%
+\\
+\>[B]{}\Varid{wVertices}\;\Varid{g}\mathrel{=}\Varid{\Conid{Map}.keysSet}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mathbin{\$}\Varid{\Conid{Map}.filter}\;(\equiv \Conid{White}){}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mathbin{\$}\Varid{vertices}\;\Varid{g}{}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\Varid{neighbors}\mathbin{::}(\Conid{Ord}\;\Varid{a})\Rightarrow \Conid{Graph}\;\Varid{a}\to \Conid{Map}\;\Varid{a}\;(\{\Varid{a}\}){}\<[E]%
+\\
+\>[B]{}\Varid{neighbors}\;\Varid{g}\mathrel{=}\Varid{\Conid{Map}.fromSet}\;(\lambda \Varid{v}\to \Varid{\Conid{Set}.filter}\;((\Varid{v}\sim\cdot ) \in \Varid{g})\;\Varid{vs})\;\Varid{vs}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mathbf{where}\;\Varid{vs}\mathrel{=}\Varid{\Conid{Map}.keysSet}\;(\Varid{vertices}\;\Varid{g}){}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+The base case of any proof tree is $\Delta$: an Odd Cycle, which must use all 3 colors. In this case the input graph is the original graph.
+
+There is also a recursive case that uses an Odd Cycle. Any Quasi Edge result has the potential of producing new odd cycles. In this case the input is the Graph who just acquired quasi edges, and therefore has potential for new odd cycles. \footnote{Please excuse me for mixing Greek and Latin letters for the same class of symbols. $\Delta$ looks the most like an odd cycle. Likewise, $\Xi$ looks the most like a complete bipartite subgraph. $Q$ does not look like any particular subgraph, but instead it stands for "Quasi-Edge"}
+
+
+\section{Definitions}
+
+\begin{description}
+
+\item[color-constrained] A subset of a graph's vertices $S$ is said to be \emph{color-constrained} if something can be said about $S$ in any 3-coloring of the graph. For example, $S$ might need to use all 3 colors. Or $S$ cannot use 1 color.
+
+\item[color constraint] A proof that $S$ is \emph{color-constrained}. The demonstration depends on the specific \emph{color constraint} in question. There are a finite number of color constraints in \ref{color_constraints}.
+
+
+\item[greedy smothering] An algorithm on $S_1$ and $S_2$ that produces a minimal smothering, if one exists.
+
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\Varid{greedySmothering}\mathbin{::}\Conid{Graph}\;\Varid{a}\to \{\Varid{a}\}\to \{\Varid{a}\}\to \Conid{Maybe}\;(\{(\Varid{a},\Varid{a})\}){}\<[E]%
+\\
+\>[B]{}\Varid{greedySmothering}\;G\;S_1\;S_2\mathrel{=}\bot {}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+\item[inclusive smothering] A \emph{maximal smothering} that better conveys the meaning (but loses the useful antonymy with \emph{minimal smothering}).
+
+\item[maximal smothering] A \emph{smothering} that uses all edges. There is only one for each given $S_1$ and $S_2$. If there is a mutual smothering, then it is the inclusive smothering.
+
+\item[minimal smothering] A \emph{smothering} that does not have any redundant edges. If the minimal smothering is not the only smothering, then there are multiple minimal smotherings.
+
+\item[mutual smothering] Two subsets of vertices $S_1$ and $S_2$ have a \emph{mutual smothering} if:
+    \begin{enumerate}
+    \item $S_1$ \emph{smothers} $S_2$
+    \item $S_2$ \emph{smothers} $S_1$
+    \end{enumerate} Any complete bipartite graph contains a trivial mutual smothering.
+
+\item[quasi-edge] A graph contains a \emph{quasi-edge} between its vertices $u$, $v$ if the following holds:
+    \begin{enumerate}
+    \item The graph does not contain the edge $(u \sim v)$.
+    \item Any 3-coloring of the graph must color $u$ and $v$ different colors; A 3-coloring where $u$ and $v$ are the same color is impossible.
+    \end{enumerate}
+
+\item[quasi-edge-eligible] A subset of the graph's vertices $S$ is said to be \emph{quasi-edge-eligible} if $S$ \emph{smothers} some \emph{3-set} in $G$.
+
+\item[smothers] a subset of vertices $A$ \emph{smothers} a subset of vertices $B$ when every vertex in $B$ has a neighbor in $A$.
+
+\item[smothering] A set of edges which demonstrates that $A$ \emph{smothers} $B$.
+
+\end{description}
+
+\section{$\Delta$ - the base case}
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{9}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{13}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{17}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\mathbf{data}\;\Delta \;\Varid{a}\mathrel{=}\Delta \;\{\mskip1.5mu {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{input}\mathbin{::}\Conid{Graph}\;\Varid{a},{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{oddCycle}\mathbin{::}\Conid{Graph}\;\Varid{a}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mskip1.5mu\}{}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\Varid{allOddCycles}\mathbin{::}\Varid{forall}\;\Varid{a}\mathbin{\circ}(\Conid{Ord}\;\Varid{a})\Rightarrow \Conid{Graph}\;\Varid{a}\to [\mskip1.5mu \Conid{Graph}\;\Varid{a}\mskip1.5mu]{}\<[E]%
+\\
+\>[B]{}\Varid{allOddCycles}\;G\mathrel{=}\mathbf{do}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\Varid{v},\anonymous )\leftarrow \Varid{\Conid{Map}.toList}\mathbin{\$}\Varid{vertices}\;G{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{sequence}\leftarrow \Varid{go}\;\Varid{v}\;\Varid{v}\;[\mskip1.5mu \Varid{v}\mskip1.5mu]\;(\Varid{\Conid{Set}.singleton}\;\Varid{v})\;\mathrm{1}\;(\Varid{neighbors}\;G){}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{return}\mathbin{\$}\Varid{fromWalks}\;[\mskip1.5mu \Varid{sequence}\plus [\mskip1.5mu \Varid{head}\;\Varid{sequence}\mskip1.5mu]\mskip1.5mu]{}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mathbf{where}{}\<[E]%
+\\
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}\Varid{go}\mathbin{::}(\Conid{Ord}\;\Varid{a})\Rightarrow \Varid{a}\to \Varid{a}\to [\mskip1.5mu \Varid{a}\mskip1.5mu]\to \{\Varid{a}\}\to \Conid{Int}\to \Conid{Map}\;\Varid{a}\;(\{\Varid{a}\})\to [\mskip1.5mu [\mskip1.5mu \Varid{a}\mskip1.5mu]\mskip1.5mu]{}\<[E]%
+\\
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}\Varid{go}\;\Varid{s}\;\Varid{t}\;\Varid{path}\;\Varid{seen}\;\Varid{len}\;\Varid{n}\mathrel{=}\mathbf{if}{}\<[E]%
+\\
+\>[9]{}\hsindent{4}{}\<[13]%
+\>[13]{}(\Varid{s}\in (\Varid{n}\Conid{Map}.\mathbin{!}\Varid{t}))\mathrel{\wedge}\Varid{len}\geq \mathrm{3}\mathrel{\wedge}\Varid{odd}\;\Varid{len}{}\<[E]%
+\\
+\>[9]{}\hsindent{4}{}\<[13]%
+\>[13]{}\mathbf{then}\;\Varid{path}\mathbin{:}\Varid{rest}{}\<[E]%
+\\
+\>[9]{}\hsindent{4}{}\<[13]%
+\>[13]{}\mathbf{else}\;\Varid{rest}\;\mathbf{where}{}\<[E]%
+\\
+\>[9]{}\hsindent{4}{}\<[13]%
+\>[13]{}\Varid{rest}\mathrel{=}[\mskip1.5mu \Varid{x}\mid {}\<[E]%
+\\
+\>[13]{}\hsindent{4}{}\<[17]%
+\>[17]{}\Varid{v}\leftarrow \Varid{\Conid{Set}.toList}\;(\Varid{n}\Conid{Map}.\mathbin{!}\Varid{t}),{}\<[E]%
+\\
+\>[13]{}\hsindent{4}{}\<[17]%
+\>[17]{}\Varid{v}\notin \Varid{seen},{}\<[E]%
+\\
+\>[13]{}\hsindent{4}{}\<[17]%
+\>[17]{}\Varid{x}\leftarrow \Varid{go}\;\Varid{s}\;\Varid{v}\;(\Varid{v}\mathbin{:}\Varid{path})\;(\Varid{\Conid{Set}.insert}\;\Varid{v}\;\Varid{seen})\;(\Varid{len}\mathbin{+}\mathrm{1})\;\Varid{n}{}\<[E]%
+\\
+\>[13]{}\hsindent{4}{}\<[17]%
+\>[17]{}\mskip1.5mu]{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+But we don't care about all odd cycles. We can restrict our attention to the "smallest" odd cycles. Yes, it's true that this set of 5 vertices needs to use all 3 colors, since it contains a pentagon as a subgraph. But look! It also contains a triangle as subgraph. So, it's these 3 vertices in particular that need to use all 3 colors. And now it seems redundant to be talking about the original set of 5 vertices, because any subset that needs 3 colors is sufficient proof that the superset needs 3 colors.
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{9}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{13}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\Varid{filterSubcycles}\mathbin{::}\Conid{Ord}\;\Varid{a}\Rightarrow [\mskip1.5mu \Conid{Graph}\;\Varid{a}\mskip1.5mu]\to [\mskip1.5mu \Conid{Graph}\;\Varid{a}\mskip1.5mu]{}\<[E]%
+\\
+\>[B]{}\Varid{filterSubcycles}\;\Varid{cycles}\mathrel{=}\Varid{\Conid{Map}.elems}\mathbin{\$}\Varid{\Conid{Map}.fromList}\;\Varid{basis}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mathbf{where}{}\<[E]%
+\\
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}\Varid{cycleSets}\mathrel{=}\Varid{map}\;(\lambda \Varid{x}\to (\Varid{\Conid{Map}.keysSet}\mathbin{\$}\Varid{vertices}\;\Varid{x},\Varid{x}))\;\Varid{cycles}{}\<[E]%
+\\[\blanklineskip]%
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}\Varid{basis}\mathrel{=}\Varid{filter}{}\<[E]%
+\\
+\>[9]{}\hsindent{4}{}\<[13]%
+\>[13]{}(\lambda (\Varid{a},\Varid{b})\to \neg \mathbin{\$}\Varid{any}\;(\lambda (\Varid{c},\anonymous )\to \Varid{c}\mathbin{`\Varid{\Conid{Set}.isProperSubsetOf}`}\Varid{a})\;\Varid{cycleSets}){}\<[E]%
+\\
+\>[9]{}\hsindent{4}{}\<[13]%
+\>[13]{}\Varid{cycleSets}{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\mathbf{data}\;\Xi \;\Varid{a}\mathrel{=}\Xi \;\{\mskip1.5mu {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{inputs}\mathbin{::}\{(\Conid{Graph}\;\Varid{a})\},{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{outputs}\mathbin{::}\{(\Conid{Graph}\;\Varid{a})\}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mskip1.5mu\}{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\mathbf{data}\;\Conid{Q}\;\Varid{a}\mathrel{=}\Conid{Q}\;\{\mskip1.5mu {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{input}\mathbin{::}\Conid{Graph}\;\Varid{a},{}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{qVertices}\mathbin{::}\{\Varid{a}\},{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{quasiEdges}\mathbin{::}\{(\Conid{TwoSet}\;\Varid{a})\},{}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{outputs}\mathbin{::}\Conid{Graph}\;\Varid{a}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mskip1.5mu\}{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+Our proof circuit is a collection of gates.
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\mathbf{data}\;\Conid{Gate}\;\Varid{a}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mathrel{=}\Conid{GateDelta}\;(\Delta \;\Varid{a}){}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mid \Conid{GateXi}\;(\Xi \;\Varid{a}){}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mid \Conid{GateQ}\;(\Conid{Q}\;\Varid{a}){}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+
+Next we reach the definition of xi the function.
+
+Disjointness laws by definition:
+\begin{itemize}
+\item $b_1 \leftrightarrow w_1 \leftrightarrow g_1$
+\item $b_2 \leftrightarrow w_2 \leftrightarrow g_2$
+\item $g_1 \leftrightarrow g_2$
+\item $g_1 \leftrightarrow w_2$
+\item $g_2 \leftrightarrow w_1$
+\end{itemize}
+
+Disjointness laws that force the number of black vertices to strictly increase:
+\begin{itemize}
+\item $w_1 \leftrightarrow b_2$
+\item $w_2 \leftrightarrow b_1$
+\end{itemize}
+
+So actually, the only two sets that are allowed to overlap are:
+\begin{itemize}
+\item $b_1$, $b_2$
+\item $w_1$, $w_2$
+\end{itemize}
+and this is easier to remember.
+
+Thankfully, the representation of graphs already makes a disjoint distinction between black and white vertices. And the only eligible $g_1, g_2$ are among the white vertices that the graphs do not have in common.
+
+Algorithm: given any two graphs, take the venn diagram of their white vertices, and only consider the sets of vertices $g_1, g_2$ that they do not have in common. Call this pair of sets the \emph{disjoint members} of the two graphs. This narrow consideration ensures that the above disjointness laws are satisfied.
+
+Below is an algorithm that finds the disjoint members of two sets in a single pass.
+
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{9}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{22}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\Varid{disjointMembers}\mathbin{::}(\Conid{Ord}\;\Varid{a})\Rightarrow \{\Varid{a}\}\to \{\Varid{a}\}\to (\{\Varid{a}\},\{\Varid{a}\}){}\<[E]%
+\\
+\>[B]{}\Varid{disjointMembers}\;\Varid{s}_{1}\;\Varid{s}_{2}\mathrel{=}\Varid{go}\;(\Varid{\Conid{Set}.toAscList}\;\Varid{s}_{1})\;(\Varid{\Conid{Set}.toAscList}\;\Varid{s}_{2})\;[\mskip1.5mu \mskip1.5mu]\;[\mskip1.5mu \mskip1.5mu]\;\mathbf{where}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{go}\;[\mskip1.5mu \mskip1.5mu]\;[\mskip1.5mu \mskip1.5mu]\;{}\<[22]%
+\>[22]{}\Varid{t}_{1}\;\Varid{t}_{2}\mathrel{=}(\Varid{\Conid{Set}.fromAscList}\;\Varid{t}_{1},\Varid{\Conid{Set}.fromAscList}\;\Varid{t}_{2}){}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{go}\;(\Varid{x}\mathbin{:}\Varid{xs})\;[\mskip1.5mu \mskip1.5mu]\;{}\<[22]%
+\>[22]{}\Varid{t}_{1}\;\Varid{t}_{2}\mathrel{=}\Varid{go}\;\Varid{xs}\;[\mskip1.5mu \mskip1.5mu]\;((\mathbf{if}\;\Varid{x}\in \Varid{s}_{2}\;\mathbf{then}\;\Varid{id}\;\mathbf{else}\;(\Varid{x}\mathbin{:}))\;\Varid{t}_{1})\;\Varid{t}_{2}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{go}\;[\mskip1.5mu \mskip1.5mu]\;(\Varid{y}\mathbin{:}\Varid{ys})\;{}\<[22]%
+\>[22]{}\Varid{t}_{1}\;\Varid{t}_{2}\mathrel{=}\Varid{go}\;[\mskip1.5mu \mskip1.5mu]\;\Varid{ys}\;\Varid{t}_{1}\;((\mathbf{if}\;\Varid{y}\in \Varid{s}_{1}\;\mathbf{then}\;\Varid{id}\;\mathbf{else}\;(\Varid{y}\mathbin{:}))\;\Varid{t}_{2}){}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{go}\;(\Varid{x}\mathbin{:}\Varid{xs})\;(\Varid{y}\mathbin{:}\Varid{ys})\;\Varid{t}_{1}\;\Varid{t}_{2}\mathrel{=}\Varid{go}\;\Varid{xs}\;\Varid{ys}{}\<[E]%
+\\
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}((\mathbf{if}\;\Varid{x}\in \Varid{s}_{2}\;\mathbf{then}\;\Varid{id}\;\mathbf{else}\;(\Varid{x}\mathbin{:}))\;\Varid{t}_{1}){}\<[E]%
+\\
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}((\mathbf{if}\;\Varid{y}\in \Varid{s}_{1}\;\mathbf{then}\;\Varid{id}\;\mathbf{else}\;(\Varid{y}\mathbin{:}))\;\Varid{t}_{2}){}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+This implementation is verbose and the gains of a single pass are not yet known. Below is a terse two-pass version.
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\Varid{disjointMembers}\mathbin{::}(\Conid{Ord}\;\Varid{a})\Rightarrow \{\Varid{a}\}\to \{\Varid{a}\}\to (\{\Varid{a}\},\{\Varid{a}\}){}\<[E]%
+\\
+\>[B]{}\Varid{disjointMembers}\;\Varid{s}_{1}\;\Varid{s}_{2}\mathrel{=}({}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{\Conid{Set}.filter}\;(\notin \Varid{s}_{2})\;\Varid{s}_{1},{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{\Conid{Set}.filter}\;(\notin \Varid{s}_{1})\;\Varid{s}_{2}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}){}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+Note, then we need a function that can find the mutual edges between $g_1$ and $g_2$.
+
+This must return a set of pairs rather than a set of sets, because the membership in $us$ versus the membership in $vs$ must be preserved.
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\Varid{mutualEdges}\mathbin{::}\Conid{Ord}\;\Varid{a}\Rightarrow \Conid{Graph}\;\Varid{a}\to \{\Varid{a}\}\to \{\Varid{a}\}\to \{(\Varid{a},\Varid{a})\}{}\<[E]%
+\\
+\>[B]{}\Varid{mutualEdges}\;G\;\Varid{us}\;\Varid{vs}\mathrel{=}\Varid{\Conid{Set}.fromList}\;[\mskip1.5mu (\Varid{u},\Varid{v})\mid {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{u}\leftarrow \Varid{\Conid{Set}.toList}\;\Varid{us},{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{v}\leftarrow \Varid{\Conid{Set}.toList}\;\Varid{vs},{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\Varid{u}\sim\Varid{v}) \in G{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mskip1.5mu]{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+Find all complete bipartite subgraphs of a bipartite graph.
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\Varid{completeBipartiteSubgraphs}\mathbin{::}\Conid{Ord}\;\Varid{a}\Rightarrow \{(\Varid{a},\Varid{a})\}\to [\mskip1.5mu \{(\Varid{a},\Varid{a})\}\mskip1.5mu]{}\<[E]%
+\\
+\>[B]{}\Varid{completeBipartiteSubgraphs}\;\Varid{s}\mathrel{=}[\mskip1.5mu \Varid{allPairs}\;\Varid{ls}\;\Varid{rs}\mid {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{s'}\leftarrow \Varid{subsets}\;\Varid{s},{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mathbf{let}\;(\Varid{ls},\Varid{rs})\mathrel{=}\Varid{fromPairs}\;\Varid{s'},{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{l}\leftarrow \Varid{\Conid{Set}.toList}\;\Varid{ls},{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{r}\leftarrow \Varid{\Conid{Set}.toList}\;\Varid{rs},{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\Varid{l},\Varid{r})\in \Varid{s}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mskip1.5mu]{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+
+
+
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{9}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\cdot \otimes \cdot \mathbin{::}\Conid{Ord}\;\Varid{a}\Rightarrow \Conid{Graph}\;\Varid{a}\to \Conid{Graph}\;\Varid{a}\to \{(\{(\Varid{a},\Varid{a})\})\}{}\<[E]%
+\\
+\>[B]{}H_1\otimes H_2\mathrel{=}\Varid{\Conid{Set}.fromList}\mathbin{\$}\Varid{subsets}\;(\Varid{allPairs}\;I_1\;I_2){}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mathbf{where}{}\<[E]%
+\\
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}(I_1,I_2)\mathrel{=}\Varid{disjointMembers}\;(\Varid{wVertices}\;H_1)\;(\Varid{wVertices}\;H_2){}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+But for efficiency's sake, we need a version of this operator with respect to same base graph \ensuremath{G}.
+
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\cdot \otimes_{\cdot } \cdot \mathbin{::}\Conid{Ord}\;\Varid{a}\Rightarrow \Conid{Graph}\;\Varid{a}\to \Conid{Graph}\;\Varid{a}\to \Conid{Graph}\;\Varid{a}\to \{(\{(\Varid{a},\Varid{a})\})\}{}\<[E]%
+\\
+\>[B]{}H_1\otimes_{G} H_2\mathrel{=}\Varid{\Conid{Set}.filter}\;(\lambda \Varid{s}\to \Varid{f}\;\Varid{s}\subseteq \Varid{edges}\;G)\;(H_1\otimes H_2)\;\mathbf{where}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{f}\mathrel{=}\Varid{\Conid{Set}.map}\;(\Varid{uncurry}\;\Varid{wrap}){}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+\section{The odd cycles as a multigraph}
+Given a list of odd cycles, we can find out which odd cycles $\xi_g$ with each other, and in how many different ways. This is a multigraph. We call this multigraph $\aleph$. Any subtrees of $\aleph$ whose $g$s do not overlap is a valid \ensuremath{\Conid{Graph}}.
+
+
+Further subtrees will be $\beth$, $\gimel$, etc.
+
+We need a multigraph which will allow us to store information on its edges (and, in general, distinguish multiple edges that connect the same two vertices.
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\mathbf{data}\;\Conid{Multigraph}\;\Varid{a}\;\Varid{b}\mathrel{=}\Conid{Multigraph}\;\{\mskip1.5mu {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{mVertices}\mathbin{::}\{\Varid{a}\},{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{mEdges}\mathbin{::}\Conid{Map}\;(\Conid{TwoSet}\;\Varid{a})\;(\{\Varid{b}\}){}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mskip1.5mu\}\;\mathbf{deriving}\;(\Conid{Eq},\Conid{Ord},\Conid{Show}){}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+Note that we could have omitted the field \ensuremath{\Varid{mVertices}} from the above definition, as long as every pair was accounted for in \ensuremath{\Varid{mEdges}}, but rediscovering all the vertices would be costly.
+
+In fact, a multigraph is exactly isomorphic to a binary nondeterministic operator on a finite domain. We want to visualize this multigraph $\aleph$.
+
+Thus we should be able to define \ensuremath{\Varid{memoize}}.
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{9}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\Varid{memoize}\mathbin{::}\Conid{Ord}\;\Varid{a}\Rightarrow (\Varid{a}\to \Varid{a}\to \{\Varid{b}\})\to \{\Varid{a}\}\to \Conid{Multigraph}\;\Varid{a}\;\Varid{b}{}\<[E]%
+\\
+\>[B]{}\Varid{memoize}\;\Varid{f}\;\Varid{domain}\mathrel{=}\Conid{Multigraph}\;\{\mskip1.5mu {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{mVertices}\mathrel{=}\Varid{domain},{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{mEdges}\mathrel{=}\Varid{\Conid{Map}.fromList}\;[\mskip1.5mu (\Varid{wrap}\;\Varid{u}\;\Varid{v},\Varid{f}\;\Varid{u}\;\Varid{v})\mid {}\<[E]%
+\\
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}\mathbf{let}\;\Varid{xs}\mathrel{=}\Varid{\Conid{Set}.toList}\;\Varid{domain},\Varid{u}\leftarrow \Varid{xs},\Varid{v}\leftarrow \Varid{xs}{}\<[E]%
+\\
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}\mskip1.5mu]\mskip1.5mu\}{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+Applying \ensuremath{\Varid{memoize}} to $\otimes_G$
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\aleph_{\cdot }\mathbin{::}\Conid{Ord}\;\Varid{a}\Rightarrow \Conid{Graph}\;\Varid{a}\to \Conid{Multigraph}\;(\Conid{Graph}\;\Varid{a})\;(\{(\Varid{a},\Varid{a})\}){}\<[E]%
+\\
+\>[B]{}\aleph_{G}\mathrel{=}\Varid{memoize}\;(\otimes_{G})\;(\Varid{\Conid{Set}.fromList}\;(\Varid{filterSubcycles}\;(\Varid{allOddCycles}\;G))){}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+
+\section{Show me what each of your objects looks like, and I can show you a multigraph visualization of it}
+
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{9}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{13}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{17}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\Varid{renderMultigraph}\mathbin{::}(\Conid{Show}\;\Varid{a})\Rightarrow (\Varid{a}\to \Conid{String})\to \Conid{Multigraph}\;\Varid{a}\;\Varid{b}\to \Conid{String}{}\<[E]%
+\\
+\>[B]{}\Varid{renderMultigraph}\;\Varid{pngFilename}\;\Varid{m}\mathrel{=}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\text{\ttfamily \char34 graph~G~\char123 \char92 n\char34}\plus {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\text{\ttfamily \char34 ~~~~overlap=false;\char92 n\char34}\plus {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\text{\ttfamily \char34 ~~~~node~[shape=none,~label=\char92 \char34 \char92 \char34 ];\char92 n\char34}\plus {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{vertexDecls}\plus {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{edgeDecls}\plus {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\text{\ttfamily \char34 \char125 \char92 n\char34}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mathbf{where}{}\<[E]%
+\\
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}\Varid{vertexDecls}\mathrel{=}\Varid{unlines}\mathbin{\$}\Varid{map}\;\Varid{vDecl}\mathbin{\$}\Varid{\Conid{Set}.toList}\mathbin{\$}\Varid{mVertices}\;\Varid{m}{}\<[E]%
+\\
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}\Varid{vDecl}\;\Varid{v}\mathrel{=}\Varid{pngFilename}\;\Varid{v}\plus \text{\ttfamily \char34 ~[image=\char92 \char34 \char34}\plus \Varid{pngFilename}\;\Varid{v}\plus \text{\ttfamily \char34 .png\char92 \char34 ];\char34}{}\<[E]%
+\\[\blanklineskip]%
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}\Varid{edgeDecls}\mathrel{=}\Varid{unlines}\mathbin{\$}\Varid{map}\;\Varid{eDecl}\mathbin{\$}\Varid{\Conid{Map}.toList}\mathbin{\$}\Varid{mEdges}\;\Varid{m}{}\<[E]%
+\\
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}\Varid{eDecl}\;(\Varid{k},\Varid{s})\mathrel{=}\Varid{unlines}\mathbin{\$}\Varid{map}\;(\mathbin{\char92 \char95 }\to \Varid{pngFilename}\;\Varid{v}_{1}\plus \text{\ttfamily \char34 ~--~\char34}\plus \Varid{pngFilename}\;\Varid{v}_{2}\plus \text{\ttfamily \char34 ;\char34})\mathbin{\$}\Varid{\Conid{Set}.toList}\;\Varid{s}{}\<[E]%
+\\
+\>[9]{}\hsindent{4}{}\<[13]%
+\>[13]{}\mathbf{where}{}\<[E]%
+\\
+\>[13]{}\hsindent{4}{}\<[17]%
+\>[17]{}(\Varid{v}_{1},\Varid{v}_{2})\mathrel{=}\Varid{unwrap}\;\Varid{k}{}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\Varid{isValidMultigraph}\mathbin{::}\Conid{Multigraph}\;\Varid{a}\;\Varid{b}\to \Conid{Bool}{}\<[E]%
+\\
+\>[B]{}\Varid{isValidMultigraph}\;\Varid{m}\mathrel{=}\bot \;\mathbf{where}\;\Varid{x}\mathrel{=}\Varid{mEdges}\;\Varid{m}{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+
+If the vertices of a graph are indexable, and have an x, y coordinate, then the graph is renderable.
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{9}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{13}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{17}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\Varid{renderGraph}\mathbin{::}\Conid{Graph}\;(\Conid{Int},(\Conid{Int},\Conid{Int}))\to \Conid{String}{}\<[E]%
+\\
+\>[B]{}\Varid{renderGraph}\;G\mathrel{=}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\text{\ttfamily \char34 graph~G~\char123 \char92 n\char34}\plus {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\text{\ttfamily \char34 ~~~~overlap=false;\char92 n\char34}\plus {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\text{\ttfamily \char34 ~~~~node~[shape=circle,~style=filled,~fixedsize=true];\char92 n\char34}\plus {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{vertexDecls}\plus {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{edgeDecls}\plus {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\text{\ttfamily \char34 \char125 \char92 n\char34}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mathbf{where}{}\<[E]%
+\\
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}\Varid{vertexDecls}\mathrel{=}\Varid{unlines}\mathbin{\$}\Varid{map}\;\Varid{vDecl}\mathbin{\$}\Varid{\Conid{Map}.toList}\mathbin{\$}\Varid{vertices}\;G{}\<[E]%
+\\
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}\Varid{vDecl}\;((\Varid{v},(\Varid{x},\Varid{y})),\Varid{c})\mathrel{=}\Varid{show}\;\Varid{v}\plus \text{\ttfamily \char34 [\char34}\plus {}\<[E]%
+\\
+\>[9]{}\hsindent{4}{}\<[13]%
+\>[13]{}\text{\ttfamily \char34 fillcolor=\char34}\plus (\mathbf{if}\;\Varid{c}\equiv \Conid{White}\;\mathbf{then}\;\text{\ttfamily \char34 white\char34}\;\mathbf{else}\;\text{\ttfamily \char34 black\char34})\plus \text{\ttfamily \char34 ,~\char34}\plus {}\<[E]%
+\\
+\>[9]{}\hsindent{4}{}\<[13]%
+\>[13]{}\text{\ttfamily \char34 fontcolor=\char34}\plus (\mathbf{if}\;\Varid{c}\equiv \Conid{Black}\;\mathbf{then}\;\text{\ttfamily \char34 white\char34}\;\mathbf{else}\;\text{\ttfamily \char34 black\char34})\plus \text{\ttfamily \char34 ,~\char34}\plus {}\<[E]%
+\\
+\>[9]{}\hsindent{4}{}\<[13]%
+\>[13]{}\text{\ttfamily \char34 pos=\char92 \char34 \char34}\plus \Varid{show}\;\Varid{x}\plus \text{\ttfamily \char34 ,\char34}\plus \Varid{show}\;\Varid{y}\plus \text{\ttfamily \char34 !\char92 \char34 \char34}\plus {}\<[E]%
+\\
+\>[9]{}\hsindent{4}{}\<[13]%
+\>[13]{}\text{\ttfamily \char34 ];\char34}{}\<[E]%
+\\[\blanklineskip]%
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}\Varid{edgeDecls}\mathrel{=}\Varid{unlines}\mathbin{\$}\Varid{map}\;\Varid{eDecl}\mathbin{\$}\Varid{\Conid{Set}.toList}\mathbin{\$}\Varid{edges}\;G{}\<[E]%
+\\[\blanklineskip]%
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}\Varid{eDecl}\;\Varid{t}\mathrel{=}\Varid{show}\;\Varid{v}_{1}\plus \text{\ttfamily \char34 ~--~\char34}\plus \Varid{show}\;\Varid{v}_{2}\plus \text{\ttfamily \char34 ;\char34}{}\<[E]%
+\\
+\>[9]{}\hsindent{4}{}\<[13]%
+\>[13]{}\mathbf{where}{}\<[E]%
+\\
+\>[13]{}\hsindent{4}{}\<[17]%
+\>[17]{}((\Varid{v}_{1},\anonymous ),(\Varid{v}_{2},\anonymous ))\mathrel{=}\Varid{unwrap}\;\Varid{t}{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+\section{Example Graphs}
+
+\subsection{A tedious manual way to generate graphs}
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{7}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\Varid{fromEdgeList}\mathbin{::}(\Conid{Ord}\;\Varid{a})\Rightarrow [\mskip1.5mu (\Varid{a},\Varid{a})\mskip1.5mu]\to \Conid{Graph}\;\Varid{a}{}\<[E]%
+\\
+\>[B]{}\Varid{fromEdgeList}\;\Varid{edges}\mathrel{=}\Conid{Graph}\;\{\mskip1.5mu {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{vertices}\mathrel{=}\Varid{\Conid{Map}.fromList}\mathbin{\$}[\mskip1.5mu (\Varid{x},\Conid{White})\mid (\Varid{u},\Varid{v})\leftarrow \Varid{edges},\Varid{x}\leftarrow [\mskip1.5mu \Varid{u},\Varid{v}\mskip1.5mu]\mskip1.5mu],{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{edges}\mathrel{=}\Varid{\Conid{Set}.fromList}\mathbin{\$}\Varid{map}\;(\Varid{uncurry}\;\Varid{wrap})\;\Varid{edges}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mskip1.5mu\}{}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\Varid{fromWalks}\mathbin{::}(\Conid{Ord}\;\Varid{a})\Rightarrow [\mskip1.5mu [\mskip1.5mu \Varid{a}\mskip1.5mu]\mskip1.5mu]\to \Conid{Graph}\;\Varid{a}{}\<[E]%
+\\
+\>[B]{}\Varid{fromWalks}\;\Varid{walks}\mathrel{=}\Varid{fromEdgeList}\mathbin{\$}\mathbf{do}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{walk}\leftarrow \Varid{walks}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{zip}\;\Varid{walk}\;(\Varid{tail}\;\Varid{walk}){}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\Varid{fromWalks2}\mathbin{::}(\Conid{Ord}\;\Varid{a},\Conid{Ord}\;\Varid{b})\Rightarrow [\mskip1.5mu (\Varid{a},\Varid{b})\mskip1.5mu]\to [\mskip1.5mu [\mskip1.5mu \Varid{a}\mskip1.5mu]\mskip1.5mu]\to \Conid{Graph}\;(\Varid{a},\Varid{b}){}\<[E]%
+\\
+\>[B]{}\Varid{fromWalks2}\;\Varid{lookupTable}\;\Varid{walks}\mathrel{=}\Varid{fromWalks}\mathbin{\$}\Varid{map}\;(\Varid{map}\;(\lambda \Varid{y}\to (\Varid{y},\Varid{m}\Conid{Map}.\mathbin{!}\Varid{y})))\;\Varid{walks}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mathbf{where}{}\<[E]%
+\\
+\>[5]{}\hsindent{2}{}\<[7]%
+\>[7]{}\Varid{m}\mathrel{=}\Varid{\Conid{Map}.fromList}\;\Varid{lookupTable}{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+\subsection{An easier way}
+TODO
+
+\section{All The Color Constraints}
+
+
+
+\label{color_constraints}
+\section{Just The Important Color Constraints}
+
+Formula:
+\[
+    F_{01*}(G) = \{S \mid S \subseteq V(G), \chi(S) \not\in 1, \chi(S) \in 2, (\chi(S) \in 3 \lor \chi(S) \not\in 3) \}
+\]
+
+\begin{description}
+\item[$F_{111}$]
+\end{description}
+
+
+\section{A redefinition of the Hajos construction using isochromacies}
+
+\subsection{Some sample graphs}
+
+\subsubsection{Three pentagons (or three triangles -- it depends how you look at it)}
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\Varid{triplePentagon}\mathbin{::}\Conid{Graph}\;(\Conid{Int},(\Conid{Int},\Conid{Int})){}\<[E]%
+\\
+\>[B]{}\Varid{triplePentagon}\mathrel{=}\Varid{fromWalks2}\;[\mskip1.5mu {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{0},(\mathrm{4},\mathrm{2})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{1},(\mathrm{2},\mathrm{3})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{2},(\mathrm{6},\mathrm{3})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{3},(\mathrm{4},\mathrm{1})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{4},(\mathrm{3},\mathrm{4})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{5},(\mathrm{5},\mathrm{4})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{6},(\mathrm{8},\mathrm{3})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{7},(\mathrm{7},\mathrm{0})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{8},(\mathrm{1},\mathrm{0})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{9},(\mathrm{0},\mathrm{3}))\mskip1.5mu][\mskip1.5mu {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}[\mskip1.5mu \mathrm{0},\mathrm{1},\mathrm{4},\mathrm{5},\mathrm{2},\mathrm{0},\mathrm{2},\mathrm{6},\mathrm{7},\mathrm{3},\mathrm{0},\mathrm{3},\mathrm{8},\mathrm{9},\mathrm{1},\mathrm{0},\mathrm{1},\mathrm{4},\mathrm{5}\mskip1.5mu],{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}[\mskip1.5mu \mathrm{5},\mathrm{6},\mathrm{7},\mathrm{8},\mathrm{9},\mathrm{4}\mskip1.5mu]\mskip1.5mu]{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+\subsection{Three triangles}
+The canonical example to demonstrate the special case of associativity.
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\Varid{threeTriangles}\mathbin{::}\Conid{Graph}\;(\Conid{Int},(\Conid{Int},\Conid{Int})){}\<[E]%
+\\
+\>[B]{}\Varid{threeTriangles}\mathrel{=}\Varid{fromWalks2}\;[\mskip1.5mu {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{0},(\mathrm{0},\mathrm{0})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{1},(\mathrm{8},\mathrm{0})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{2},(\mathrm{1},\mathrm{1})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{3},(\mathrm{7},\mathrm{1})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{4},(\mathrm{2},\mathrm{0})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{5},(\mathrm{6},\mathrm{0})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{6},(\mathrm{3},\mathrm{0})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{7},(\mathrm{5},\mathrm{0})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{8},(\mathrm{4},\mathrm{1})){}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mskip1.5mu][\mskip1.5mu [\mskip1.5mu \mathrm{0},\mathrm{2},\mathrm{4},\mathrm{6},\mathrm{8},\mathrm{7},\mathrm{5},\mathrm{3},\mathrm{1},\mathrm{5},\mathrm{7},\mathrm{6},\mathrm{4},\mathrm{0}\mskip1.5mu]\mskip1.5mu]{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+\subsection{Two triangles}
+The smallest $\Xi$.
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\Varid{twoTriangles}\mathbin{::}\Conid{Graph}\;(\Conid{Int},(\Conid{Int},\Conid{Int})){}\<[E]%
+\\
+\>[B]{}\Varid{twoTriangles}\mathrel{=}\Varid{fromWalks2}\;[\mskip1.5mu {}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{0},(\mathrm{0},\mathrm{2})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{1},(\mathrm{0},\mathrm{0})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{2},(\mathrm{1},\mathrm{1})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{3},(\mathrm{2},\mathrm{1})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{4},(\mathrm{3},\mathrm{2})),{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}(\mathrm{5},(\mathrm{3},\mathrm{0})){}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mskip1.5mu][\mskip1.5mu [\mskip1.5mu \mathrm{2},\mathrm{1},\mathrm{0},\mathrm{2},\mathrm{3},\mathrm{4},\mathrm{5},\mathrm{3}\mskip1.5mu]\mskip1.5mu]{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+\section{Finding all spanning forests of a multigraph}
+
+\subsection{Under the condition that committing to an edge removes other edges}
+
+More generally, the tree might change.
+
+
+\section{Set Theory Functions \& Isomorphisms}
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{7}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\Varid{subsets}\mathbin{::}\Conid{Ord}\;\Varid{a}\Rightarrow \{\Varid{a}\}\to [\mskip1.5mu \{\Varid{a}\}\mskip1.5mu]{}\<[E]%
+\\
+\>[B]{}\Varid{subsets}\;\Varid{s}\mathrel{=}\mathbf{if}\;\Varid{\Conid{Set}.null}\;\Varid{s}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mathbf{then}\;[\mskip1.5mu \Varid{\Conid{Set}.empty}\mskip1.5mu]{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\mathbf{else}{}\<[E]%
+\\
+\>[5]{}\hsindent{2}{}\<[7]%
+\>[7]{}\mathbf{let}\;(\Varid{x},\Varid{xs})\mathrel{=}\Varid{\Conid{Set}.deleteFindMin}\;\Varid{s}\;\mathbf{in}\;\mathbf{do}{}\<[E]%
+\\
+\>[5]{}\hsindent{2}{}\<[7]%
+\>[7]{}\Varid{s'}\leftarrow \Varid{subsets}\;\Varid{xs}{}\<[E]%
+\\
+\>[5]{}\hsindent{2}{}\<[7]%
+\>[7]{}[\mskip1.5mu \Varid{s'},\Varid{\Conid{Set}.insert}\;\Varid{x}\;\Varid{s'}\mskip1.5mu]{}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\Varid{fromPairs}\mathbin{::}\Conid{Ord}\;\Varid{a}\Rightarrow \{(\Varid{a},\Varid{a})\}\to (\{\Varid{a}\},\{\Varid{a}\}){}\<[E]%
+\\
+\>[B]{}\Varid{fromPairs}\;\Varid{pairs}\mathrel{=}\mathbf{let}\;(\Varid{x},\Varid{y})\mathrel{=}\Varid{go}\;(\Varid{\Conid{Set}.toAscList}\;\Varid{pairs})\;[\mskip1.5mu \mskip1.5mu]\;[\mskip1.5mu \mskip1.5mu]\;\mathbf{in}\;(\Varid{\Conid{Set}.fromList}\;\Varid{x},\Varid{\Conid{Set}.fromList}\;\Varid{y})\;\mathbf{where}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{go}\;[\mskip1.5mu \mskip1.5mu]\;\Varid{ls}\;\Varid{rs}\mathrel{=}(\Varid{ls},\Varid{rs}){}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{go}\;((\Varid{l},\Varid{r})\mathbin{:}\Varid{rest})\;\Varid{ls}\;\Varid{rs}\mathrel{=}\Varid{go}\;\Varid{rest}\;(\Varid{l}\mathbin{:}\Varid{ls})\;(\Varid{r}\mathbin{:}\Varid{rs}){}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\Varid{allPairs}\mathbin{::}\Conid{Ord}\;\Varid{a}\Rightarrow \{\Varid{a}\}\to \{\Varid{a}\}\to \{(\Varid{a},\Varid{a})\}{}\<[E]%
+\\
+\>[B]{}\Varid{allPairs}\;\Varid{xs}\;\Varid{ys}\mathrel{=}\Varid{\Conid{Set}.fromList}\mathbin{\$}[\mskip1.5mu (\Varid{x},\Varid{y})\mid \Varid{x}\leftarrow \Varid{\Conid{Set}.toList}\;\Varid{xs},\Varid{y}\leftarrow \Varid{\Conid{Set}.toList}\;\Varid{ys}\mskip1.5mu]{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+Consider a set that can contain exactly two values.
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\mathbf{newtype}\;\Conid{TwoSet}\;\Varid{a}\mathrel{=}\Conid{TwoSet}\;(\{\Varid{a}\})\;\mathbf{deriving}\;(\Conid{Eq},\Conid{Ord}){}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\mathbf{instance}\;\Conid{Show}\;\Varid{a}\Rightarrow \Conid{Show}\;(\Conid{TwoSet}\;\Varid{a})\;\mathbf{where}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{show}\;(\Conid{TwoSet}\;\Varid{x})\mathrel{=}\mathbf{if}\;\Varid{\Conid{Set}.size}\;\Varid{x}\not\equiv \mathrm{2}\;\mathbf{then}\;\Varid{trace}\;(\text{\ttfamily \char34 Found~one:~\char34}\plus \Varid{show}\;\Varid{x})\;(\Varid{show}\;(\Varid{unwrap}\;(\Conid{TwoSet}\;\Varid{x})))\;\mathbf{else}\;\Varid{show}\;\Varid{x}{}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\Varid{wrap}\mathbin{::}(\Conid{Ord}\;\Varid{a})\Rightarrow \Varid{a}\to \Varid{a}\to \Conid{TwoSet}\;\Varid{a}{}\<[E]%
+\\
+\>[B]{}\Varid{wrap}\;\Varid{x}\;\Varid{y}\mathrel{=}\Conid{TwoSet}\mathbin{\$}\Varid{\Conid{Set}.insert}\;\Varid{y}\mathbin{\$}\Varid{\Conid{Set}.singleton}\;\Varid{x}{}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\Varid{unwrap}\mathbin{::}\Conid{Show}\;\Varid{a}\Rightarrow \Conid{TwoSet}\;\Varid{a}\to (\Varid{a},\Varid{a}){}\<[E]%
+\\
+\>[B]{}\Varid{unwrap}\;(\Conid{TwoSet}\;\Varid{x})\mathrel{=}\mathbf{if}\;\Varid{\Conid{Set}.size}\;\Varid{x}\not\equiv \mathrm{2}\;\mathbf{then}\;\Varid{trace}\;(\text{\ttfamily \char34 Problem:~\char34}\plus \Varid{show}\;\Varid{x})\;\bot \;\mathbf{else}\;(\Varid{l},\Varid{r})\;\mathbf{where}\;[\mskip1.5mu \Varid{l},\Varid{r}\mskip1.5mu]\mathrel{=}\Varid{\Conid{Set}.toList}\;\Varid{x}{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+Here we consider a set with only two values.
+
+\section{Visualizing proof circuits with Graphviz}
+
+The \text{\ttfamily dot} layout engine is great for laying out tiered circuits, which is exactly what these graph proof steps turn out to be. First, each graph is rendered with \text{\ttfamily neato} and saved as an indexed image. Then, each \ensuremath{\Conid{Graph}} is associated with its image, and a directed graph (a circuit) is built connecting input graphs to gates, and gates to output graphs.
+
+\subsection{Writing Graphviz files}
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{5}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{7}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{9}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{13}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\Varid{writeAleph}\mathbin{::}\Conid{Graph}\;(\Conid{Int},(\Conid{Int},\Conid{Int}))\to \Conid{IO}\;(){}\<[E]%
+\\
+\>[B]{}\Varid{writeAleph}\;G\mathrel{=}\mathbf{do}{}\<[E]%
+\\
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{writeFile}\;\text{\ttfamily \char34 original.dot\char34}\;(\Varid{renderGraph}\;G){}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{mapM\char95 }\;{}\<[E]%
+\\
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}(\lambda (\Varid{oddCycle},\Varid{f})\to \Varid{writeFile}\;\Varid{f}\;(\Varid{renderGraph}\;\Varid{oddCycle}))\;{}\<[E]%
+\\
+\>[5]{}\hsindent{4}{}\<[9]%
+\>[9]{}(\Varid{\Conid{Map}.toList}\;\Varid{pngs}){}\<[E]%
+\\[\blanklineskip]%
+\>[B]{}\hsindent{5}{}\<[5]%
+\>[5]{}\Varid{writeFile}\;\text{\ttfamily \char34 final.dot\char34}\;(\Varid{renderMultigraph}\;(\Varid{pngs}\Conid{Map}.\mathbin{!})\;\Varid{m}){}\<[E]%
+\\
+\>[5]{}\hsindent{2}{}\<[7]%
+\>[7]{}\mathbf{where}{}\<[E]%
+\\
+\>[7]{}\hsindent{2}{}\<[9]%
+\>[9]{}\Varid{m}\mathrel{=}\aleph_{G}{}\<[E]%
+\\
+\>[7]{}\hsindent{2}{}\<[9]%
+\>[9]{}\Varid{pngs}\mathrel{=}\Varid{\Conid{Map}.fromList}\mathbin{\$}\Varid{zip}{}\<[E]%
+\\
+\>[9]{}\hsindent{4}{}\<[13]%
+\>[13]{}(\Varid{\Conid{Set}.toList}\;(\Varid{mVertices}\;\Varid{m})){}\<[E]%
+\\
+\>[9]{}\hsindent{4}{}\<[13]%
+\>[13]{}[\mskip1.5mu \text{\ttfamily \char34 bwgraph-\char34}\plus \Varid{show}\;\Varid{i}\plus \text{\ttfamily \char34 -images.dot\char34}\mid \Varid{i}\leftarrow [\mskip1.5mu \mathrm{0}\mathinner{\ldotp\ldotp}\mskip1.5mu]\mskip1.5mu]{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+\section{Putting it all together}
+
+\begin{hscode}\SaveRestoreHook
+\column{B}{@{}>{\hspre}l<{\hspost}@{}}%
+\column{E}{@{}>{\hspre}l<{\hspost}@{}}%
+\>[B]{}\Varid{main}\mathbin{::}\Conid{IO}\;(){}\<[E]%
+\\
+\>[B]{}\Varid{main}\mathrel{=}\Varid{writeAleph}\;\Varid{twoTriangles}{}\<[E]%
+\ColumnHook
+\end{hscode}\resethooks
+
+\end{document}

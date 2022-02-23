@@ -1,0 +1,10 @@
+graph G {
+    overlap=false;
+    node [shape=circle, style=filled, fixedsize=true];
+0[fillcolor=white, fontcolor=black, pos="0,2!"];
+1[fillcolor=white, fontcolor=black, pos="0,0!"];
+2[fillcolor=white, fontcolor=black, pos="1,1!"];
+0 -- 1;
+0 -- 2;
+1 -- 2;
+}

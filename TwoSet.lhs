@@ -7,7 +7,7 @@ module TwoSet where
 import qualified Data.Set as Set
 import Data.Set (Set)
 
-data TwoSet a = TwoSet' (Set a) deriving (Eq, Ord)
+newtype TwoSet a = TwoSet' (Set a) deriving (Eq, Ord)
 
 instance Show a => Show (TwoSet a) where
     show x = show $ unwrap x
