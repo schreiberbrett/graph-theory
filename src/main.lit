@@ -8,6 +8,39 @@ This is just a sample introduction to see how the Literate tool works.
 --- brett.ts
 
 function helloWorld() {
-    console.log('Hello, world!');
+    console.log('Hello, world 3!');
+}
+
+---
+
+@s Non-3-colorability and odd cycles
+Proving a graph $G$ is not 3-colorable involves operations on the odd cycles contained in the graph. Therefore it would be useful to collect a set of sets of vertices, where the outer set contains the inner set if and only if there is an odd cycle in $G$ containing exactly those vertices in the inner set.
+
+A hypergraph would be the most appropriate data structure for representing this set-of-sets since the innermost elements are vertices corresponding to vertices of the original graph $G$. Let's call this an **odd cycle hypergraph** $H$ that can be generated from $G$.
+
+![test](../diagrams/odd-cycle-hypergraph.jpg "an odd cycle hypergraph")
+
+For example, consider the above graph $G$. It has 4 odd cycles drawn shown separately. Its odd cycle hypergraph $H$, also shown, is [non-simple](https://en.wikipedia.org/wiki/Hypergraph#Properties_of_hypergraphs), since two of its hyperedges contain the same set of vertices.
+
+
+An efficient representatino of a hypergraph is to use a two-dimensional boolean array where the rows are hyperedges and the columns are vertices. Each cell  $(e, v)$ holds the value `true` if vertex $v$ is included in the hyper-edge $e$, and `false` otherwise.
+
+@s Removing edges contained in other edges
+
+Since 
+
+--- Hypergraph.ts
+
+---
+
+
+
+
+--- brett.ts +=
+class Hypergraph<T> implements Set<Set<T>> {
+    constructor(finiteDomain: Set<T>) {
+
+    }
 }
 ---
+
