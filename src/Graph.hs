@@ -94,6 +94,20 @@ data BWGraph a = BWGraph {
     bwEdges :: Set (a, a)
     } deriving (Eq, Ord)
 
+data Ckt a b = Ckt {
+    values :: Set a,
+    gates :: Set b,
+    inputs :: Set (a, b),
+    outputs :: Set (b, a)
+    } deriving (Eq, Ord)
+
+data RGB = Red | Green | Blue deriving (Eq, Ord, Show)
+
+data RGBGraph a = RGBGraph {
+    rgbVertices :: Map a RGB,
+    rgbEdges :: Set (a, a)
+    } deriving (Eq, Ord)
+
 data Gate a = Base a | Rec (Set a) a deriving (Eq, Ord, Show)
 
 isRec :: Gate a -> Bool
@@ -139,12 +153,15 @@ isCBS :: (Ord a) => Graph a -> Set a -> Set a -> Bool
 isCBS g b1 b2 = and [hasEdge g u v | u <- Set.toList b1, v <- Set.toList b2]
 
 mkCycle :: (Ord a) => [a] -> BWGraph a
-mkCycle vs = white
+mkCycle vs = toBWGraph (const White)
     $ fromEdgeList
     $ (head vs, last vs):zip vs (tail vs)
 
-white :: (Ord a) => Graph a -> BWGraph a
-white g = BWGraph {bwVertices=Map.fromSet (const White) (vertices g), bwEdges=edges g}
+toBWGraph :: (Ord a) => (a -> BW) -> Graph a -> BWGraph a
+toBWGraph f g = BWGraph {bwVertices=Map.fromSet f (vertices g), bwEdges=edges g}
+
+toRGBGraph :: (Ord a) => (a -> RGB) -> Graph a -> RGBGraph a
+toRGBGraph f g = RGBGraph {rgbVertices=Map.fromSet f (vertices g), rgbEdges=edges g}
 
 merge :: (Ord a) => (BWGraph a, Set a, Set a) -> (BWGraph a, Set a, Set a) -> BWGraph a
 merge (b1, o1, i1) (b2, o2, i2) = BWGraph {
@@ -170,13 +187,23 @@ xi g known3s b1 b2 = map (uncurry merge)
     -- -- $ allMaxBy (\((_, i1), (_, i2)) -> Set.size i1 + Set.size i2)
 
     $ [((b1, o1, i1), (b2, o2, i2)) |
-        -- mutuallyDisjoint (bVertices b1) (bVertices b2) (wVertices b1),
-        -- mutuallyDisjoint (bVertices b1) (bVertices b2) (wVertices b2),
+    
+        (bVertices b1) `disjoint` (bVertices b2),
+        -- shouldn't this be true? ^
+    
         (o1, i1) <- partitions $ wVertices b1,
         not $ Set.null i1,
         (o2, i2) <- partitions $ wVertices b2,
         not $ Set.null i2,
         
+        isCBS g i1 i2,
+        
+        -- required for the predicate to work
+        disjoint i1 o2,
+        disjoint i2 o1,
+        disjoint i1 i2,
+        
+        -- not required, just a good optimization
         -- This may be as powerful as the last two (commented (?)) conditions
         disjoint o1 (bVertices b2),
         disjoint o2 (bVertices b1),
@@ -184,14 +211,13 @@ xi g known3s b1 b2 = map (uncurry merge)
         -- let i1i2 = i1 \/ i2
         -- Set.size i1i2 > (max (Set.size i1) (Set.size i2))
         
-        mutuallyDisjoint i1 i2 o1,
-        mutuallyDisjoint i1 i2 o2,
-        isCBS g i1 i2,
+        --mutuallyDisjoint i1 i2 o1,
+        --mutuallyDisjoint i1 i2 o2,
 
-        let o1o2 = o1 \/ o2 -- ,
+        let o1o2 = o1 \/ o2,
         -- comment / uncomment one or both
-        -- o1o2 `notElem` known3s,
-        -- not $ any (`Set.isProperSubsetOf` o1o2) known3s
+        o1o2 `notElem` known3s,
+        not $ any (`Set.isProperSubsetOf` o1o2) known3s
         ]
 
 
@@ -230,10 +256,54 @@ splitUpHelper (x:xs) (a, b, c) (d, e, f) soFar = undefined
       cd, ce, cf, c_,
       d_, e_, f_) = splitUpHelper xs (a, b, c) (d, e, f) soFar
 
-data Out a = DEF a a a
 
-leq :: (Ord a) => Gate (BWGraph a) -> Gate (BWGraph a) -> Bool
-leq g1 g2 = wVertices (out g1) `Set.isProperSubsetOf` wVertices (out g2)
+compress :: Set (Gate a) -> Set (Gate a)
+compress = undefined
+
+canBeCompressed :: Set (Gate a) -> Gate a -> Gate a -> Gate a -> Gate a -> Bool
+canBeCompressed all x y z w = undefined
+  where
+    eq gate in1 in2 out = gate == Rec (Set.fromList [in1, in2]) out
+
+    
+minimizeCircuit :: (Eq a, Ord a, Show a) => Map (Set a) (Set a) -> Map (Set a) (Set a)
+minimizeCircuit = undefined
+
+    
+findShortcuts ::(Eq a, Ord a, Show a) => Map (Set a) (Set a) -> Map (Set a) (Set a)
+findShortcuts m = Map.fromList [ [a, b, c] ~> f | 
+    [a, b, c, d, e, f] <- pick 6 (allElements m), -- values
+    [x, y, z, w] <- pick 4 (Map.toList m), -- gates
+
+	-- trace ("x == " ++ show x) True,
+	-- trace ("a == " ++ show a ++ ", b == " ++ show b) True,
+    x == [a, b] ~> d,
+    y == [b, c] ~> e,
+    z == [a, e] ~> f,
+    w == [d, c] ~> f
+    ]
+      where
+        ins ~> out = (Set.fromList ins, Set.singleton out)
+
+allElements :: (Ord a) => Map (Set a) (Set a) -> [a]
+allElements m = nubOrd $ [ x | (k, v) <- Map.toList m, s <- [k, v], x <- Set.toList s]
+
+pick :: Int -> [a] -> [[a]]
+pick = subsequencesOfSize
+
+-- from: https://stackoverflow.com/a/21288092
+subsequencesOfSize :: Int -> [a] -> [[a]]
+subsequencesOfSize n xs = let l = length xs
+                          in if n>l then [] else subsequencesBySize xs !! (l-n)
+ where
+   subsequencesBySize [] = [[[]]]
+   subsequencesBySize (x:xs) = let next = subsequencesBySize xs
+                             in zipWith (++) ([]:next) (map (map (x:)) next ++ [[]])
+
+
+lt :: (Ord a) => BWGraph a -> BWGraph a -> Bool
+lt g1 g2 = wVertices g1 `Set.isProperSubsetOf` wVertices g2
+
 
 
 calc :: (Ord a) => Int -> Graph a -> Set (Gate (BWGraph a)) -> Set (Gate (BWGraph a)) -> Set (Gate (BWGraph a))
@@ -243,7 +313,7 @@ calc n graph known new = if Set.null result
     else trace (show (Set.size result)) $ calc (n - 1) graph known_and_new result
     where
       result = Set.fromList
-          $ filter (\x -> not $ any (\y -> y `leq` x) iteration) -- keep only the smallest
+          $ filter (\x -> not $ any (\y -> (out y) `lt` (out x)) iteration) -- keep only the smallest
           $ iteration
       
       iteration = [ Rec (Set.fromList [b1, b2]) x |
@@ -273,7 +343,7 @@ calcAll graph = Set.filter (\x -> not $ isUnusedOddCycle x gates) gates where
     gates = calc 6 graph oc oc
 
     oc = Set.fromList
-        $ nubBy leq
+        $ nubBy (\x y -> (out x) `lt` (out y))
         $ Set.toList
         $ oddCycleGates graph
 
@@ -301,7 +371,7 @@ toGraphviz2 g = "graph G {\n" ++
 
     "}"
 
-toDigraph :: (Ord a) => {-(a -> Bool) ->-} Map a String -> Set (Gate a) -> String
+toDigraph :: (Ord a, Show a) => {-(a -> Bool) ->-} Map (BWGraph a) String -> Set (Gate (BWGraph a)) -> String
 toDigraph {-criteria-} graphs gates =
     "digraph G {\n" ++
     "    overlap=false;\n" ++
@@ -328,6 +398,12 @@ toDigraph {-criteria-} graphs gates =
     "}" where
       oddCycleNames = map (\(Base x) -> graphs Map.! x) $ filter (not . isRec) $ Set.toList gates
       
+      m = asMap gates
+      shortcuts = trace ("Shortcuts: " ++ (show (Map.size $ (findShortcuts m)))) $ findShortcuts m
+      allBWGraphs = allElements m
+
+      -- pairs = Map.toList $ m `Map.union` shortcuts
+
       pairs = Map.toList (asMap gates)
       -- uncomment (and add `criteria` parameter) to clean up the tree -- just view one random BWGraph's family
       
@@ -338,8 +414,6 @@ toDigraph {-criteria-} graphs gates =
           $ filter criteria
           $ map out (Set.toList gates)
       -}
-
-
 
 digraphString :: Set a -> Set a -> Int -> (a -> String) -> String
 -- with intermediate xi gate
@@ -374,9 +448,27 @@ allMaxBy f (x:xs) = case allMaxBy f xs of
         EQ -> x:y:ys
         GT -> [x]
 
+unriffle :: [a] -> [([a], [a])]
+unriffle [] = [([], [])]
+unriffle (x:xs) = do
+    (l, r) <- unriffle xs
+    result <- [(x:l, r), (l, x:r)]
+    return result
+
+    
+-- see associative-gates.svg
+findAssociatives :: [(a, b)] -> [(b, a)] -> ([(a, b)], [(b, a)])
+findAssociatives ins outs = undefined
+    
+threePartitionExample = [ 20, 23, 25, 30, 49, 45, 27, 30, 30, 40, 22, 19 ]
+
+
+threePartition [] _ = [[]]
+threePartiton xs s = [ (a, b, c):rec | ([a, b, c], rest) <- unriffle xs, (a + b + c) == s, rec <- threePartition rest s]
+        
 writeAll :: Graph Integer -> IO ()
 writeAll g = do
-    writeFile "original.dot" (toGraphviz (white g))
+    writeFile "original.dot" $ toGraphviz $ toBWGraph (const White) g
 
     mapM_
         (\(b, i) -> writeFile
@@ -399,7 +491,7 @@ writeAll g = do
 -- use when you have the positions specified
 writeAll2 :: Graph (Integer, (Integer, Integer)) -> IO ()
 writeAll2 g = do
-    writeFile "original.dot" (toGraphviz2 (white g))
+    writeFile "original.dot" (toGraphviz2 (toBWGraph (const White) g))
 
     mapM_
         (\(b, i) -> writeFile
@@ -464,10 +556,6 @@ tripleBowtieAndExtra = fromWalks2 [
     (11, (5, 0))] $ [
     [0, 6, 1, 2, 7, 3, 4, 8, 5, 8, 9, 11, 10, 9, 6, 1, 0], [2, 3, 4, 5], [7, 9]] 
 
-boxedDiamond = fromWalks [
-    [0, 1, 2, 3, 4, 5, 0],
-    [0, 2, 3, 1]]
-
 twoPentagons = fromWalks [
     [0, 1, 2, 3, 4, 5, 6, 7, 0],
     [1, 5], [2, 6],
@@ -531,7 +619,7 @@ diamond = fromWalks2 [
     
 iceCream = fromWalks [[0, 1, 2, 3, 4 ,5, 0], [5, 1]]
 
-threeWhite = fromWalks2 [
+boxedDiamond = fromWalks2 [
         (0, (0, 3)),
         (1, (2, 3)),
         (2, (0, 1)),
@@ -612,3 +700,50 @@ tripleSpindle = fromWalks2 [
     (8, (3, 2)),
     (9, (3, 0))] $ [
     [0, 1, 3, 5, 7, 9, 8, 6, 2, 4, 0, 1, 5, 3, 7, 8, 9, 6, 4, 2, 0]]
+    
+fourTriangles = fromWalks2 [
+    (0, (2, 3)),
+    (1, (4, 3)),
+    (2, (3, 2)),
+    (3, (0, 1)),
+    (4, (6, 1)),
+    (5, (2, 1)),
+    (6, (4, 1)),
+    (7, (1, 0)),
+    (8, (5, 0))] $ [
+    [0, 1, 2, 0, 2, 5, 3, 7, 5, 6, 8, 4, 6, 2]]
+    
+    
+mcdermott = fromWalks2 [
+    (0, (0, 5)),
+    (1, (3, 5)),
+    (2, (1, 4)),
+    (3, (2, 4)),
+    (4, (0, 3)),
+    (5, (3, 3)),
+    (6, (0, 2)),
+    (7, (3, 2)),
+    (8, (1, 1)),
+    (9, (2, 1)),
+    (10, (0, 0)),
+    (11, (3, 0))] $ [
+    [4, 0, 2, 4, 6, 10, 8, 6], [5, 1, 3, 5, 7, 9, 11, 7],
+    [2, 9], [3, 8], [2, 3], [9, 8]]
+    
+    
+oneOperation = fromWalks2 [
+    (0, (0, 0)),
+    (1, (11, 0)),
+    (2, (1, 1)),
+    (3, (10, 1)),
+    (4, (2, 0)),
+    (5, (9, 0)),
+    (6, (3, 0)),
+    (7, (8, 0)),
+    (8, (4, 1)),
+    (9, (7, 1)),
+    (10, (5, 0)),
+    (11, (6, 0))] $ [
+    [0, 2, 4, 6, 8, 10, 11, 9, 7, 5, 3, 1, 5, 7, 11, 10, 6, 4, 0]]
+
+

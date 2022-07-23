@@ -1,0 +1,72 @@
+graph G {
+    subgraph cluster_xno0 {
+        x1no0[label=x1];
+        x2no0[label=x2];
+        x3no0[label=x3];
+    }
+    
+    subgraph cluster_xno1 {
+        x0no1[label=x0];
+        x2no1[label=x2];
+        x3no1[label=x3];
+    }
+    
+    subgraph cluster_xno2 {
+        x0no2[label=x0];
+        x1no2[label=x1];
+        x3no2[label=x3];
+    }
+    
+    subgraph cluster_xno3 {
+        x0no3[label=x0];
+        x1no3[label=x1];
+        x2no3[label=x2];
+    }
+    
+    x0no1 -- x1no0;
+    x0no2 -- x2no0;
+    x0no3 -- x3no0;
+    
+    x1no2 -- x2no1;
+    x1no3 -- x3no1;
+    
+    x2no3 -- x3no2;
+
+    
+    subgraph cluster_yno0 {
+        y1no0[label=y1];
+        y2no0[label=y2];
+        y3no0[label=y3];
+    }
+    
+    subgraph cluster_yno1 {
+        y0no1[label=y0];
+        y2no1[label=y2];
+        y3no1[label=y3];
+    }
+    
+    subgraph cluster_yno2 {
+        y0no2[label=y0];
+        y1no2[label=y1];
+        y3no2[label=y3];
+    }
+    
+    subgraph cluster_yno3 {
+        y0no3[label=y0];
+        y1no3[label=y1];
+        y2no3[label=y2];
+    }
+    
+    y0no1 -- y1no0;
+    y0no2 -- y2no0;
+    y0no3 -- y3no0;
+    
+    y1no2 -- y2no1;
+    y1no3 -- y3no1;
+    
+    y2no3 -- y3no2;
+
+    
+    
+    
+}

@@ -1,0 +1,13 @@
+@title Short proofs of graph non-3-colorability
+
+@s Introduction
+
+This is just a sample introduction to see how the Literate tool works.
+
+
+--- brett.ts
+
+function helloWorld() {
+    console.log('Hello, world!');
+}
+---

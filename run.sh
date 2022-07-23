@@ -31,6 +31,5 @@ cp build_artifacts/final.dot.png result/final.dot.png
 
 # "Eye of Gnome" image viewer.
 # -s : slideshow view
-eog result/*.png
-
+eog result/final.dot.png
 

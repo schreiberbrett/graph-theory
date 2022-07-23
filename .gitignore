@@ -1,0 +1,7 @@
+build_artifacts/*
+result/*
+
+
+Graph
+Graph.hi
+Graph.o
