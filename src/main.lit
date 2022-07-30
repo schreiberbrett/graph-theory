@@ -13,6 +13,242 @@ function helloWorld() {
 
 ---
 
+
+@s A few attempts at analogies
+
+**The Student Prankster Problem**
+- Imagine you have a university where many students take many classes. A student can be in many classes, and many students can be in one class.
+- There are certain rivalries between classes. Some sets of students will go bother other students 
+
+
+
+@s The Student Prankster problem
+
+Algorithm:
+
+1. Pick a war and its combatants.
+2. Fight through all outcomes.
+3. Mark any wars which are now viable or unviable.
+4. Recurse.
+5. If no solution found, "undo" your last war and pick another. Unmark the viable and unviable wars.
+
+This algorithm only works if there does not exist a sequence of wars which is ambiguous.
+
+
+A sequence of wars is unambiguous. But it leads to a combinatorial explosion. That means searching for the next wars is easy -- just pick one. But to *verify* a sequence of wars, you ought to have the combatants handy for each war so that it's easy to keep track.
+
+@s A nondeterministic miniKanren algorithm: Verifying that a certain sequence of wars produces a hypergraph of size < 3
+
+--- main.mk.scm
+(load "~/miniKanren/mk.scm")
+
+@{The riffle relation}
+---
+
+--- main.mk.scm +=
+(define produceso (lambda (moves g h)
+    (fresh
+        @{Definitions}
+        (conde (
+            @{When there are no moves}
+        ) (
+            @{When there is a move}
+        ))
+    )
+))
+
+@{There is a war}
+---
+
+
+Either the list of "moves" is empty, in which case one of the hyperedges of the hypergraph $h$ I have now must be of size < 3.
+--- When there are no moves
+(== moves (quote ()))
+(any-less-than-3o h)
+---
+
+Or there exists a complete bipartite subgraph in $G$ between two hyperedges $h_1$ and $h_2$. And the union of the survivors of $h_1$ and $h_2$ form $h_3$, which then gets included in the next iteration.
+
+--- When there is a move
+(fresh (rest-moves cbs h1 h2 h3)
+    (== moves `((,cbs ,h1 ,h2) . ,rest-moves))
+    (riffleo `(,h1 ,h2) rest-h h)
+    (waro g h1 h2 cbs h3)
+    (produceso rest-moves g `(,h3 . ,rest-h)))
+--- 
+
+--- Definitions
+(cbs h1 h2 h3)
+---
+
+@s
+Now we must verify that there is indeed a conflict between $h_1$ and $h_2$. So we must go through $G$ to verify that it contains every edge $(u, v)$ (or $(v, u)$).
+
+- There is a complete bipartite subgraph such that
+    - the first half is in h1 and not in h2
+    - the second half is in h2 and not in h1
+- h3 is the union of the vertices in h1 and h2 that are not in the cbs
+
+Consider 6 disjoint sets:
+
+<table>
+    <tr>
+        <th>Name</th><th>Stands for</th><th>Description</th>
+    </tr>
+    <tr>
+        <td>$r_1$</td>
+        <td>Rivals 1</td>
+        <td>The partition of the CBS contained in $h_1$ </td>
+    </tr>
+    <tr>
+        <td>$r_2$</td>
+        <td>Rivals 2</td>
+        <td>The partition of the CBS contained in $h_2$ </td>
+    </tr>
+    <tr>
+        <td>$b_1$</td>
+        <td>Bystanders 1</td>
+        <td>The vertices contained in $h_1$ but not $h_2$, and not in the CBS.</td>
+    </tr>
+    <tr>
+        <td>$b_2$</td>
+        <td>Bystanders 2</td>
+        <td>The vertices contained in $h_2$ but not $h_1$, and not in the CBS.</td>
+    </tr>
+    <tr>
+        <td>$b$</td>
+        <td>Bystanders (both)</td>
+        <td>The vertices contained in both $h_1$ and $h_2$, but not in the CBS.</td>
+    </tr>
+    <tr>
+        <td>$o$</td>
+        <td>Outsiders</td>
+        <td>The vertices not contained in either $h_1$ or $h_2$.</td>
+    </tr>
+</table>
+
+![test](../diagrams/h1-h2-relationship.jpg "The relationship between h1 and h2")
+
+The above definition, in a relationship with $h_1$ and $h_2$. This is how proof steps are encoded.
+
+--- main.mk.scm +=
+
+(define proof-stepo (lambda (step h1 h2 h3)
+    (conde
+        ((== step '()) (== h1 '()) (== h2 '()) (== h3 '()))
+        ((fresh (car-h1 cdr-h1 car-h2 cdr-h2 car-h3 cdr-h3 car-step cdr-step)
+            (== step `(,car-step . ,cdr-step))
+            (== h1 `(,car-h1 . ,cdr-h1))
+            (== h2 `(,car-h2 . ,cdr-h2))
+            (== h3 `(,car-h3 . ,cdr-h3))
+            (conde
+                ((== car-h1 0) (== car-h2 0) (== car-h3 0) (== car-step 'o))
+                ((== car-h1 1) (== car-h2 0) (== car-h3 0) (== car-step 'r1))
+                ((== car-h1 1) (== car-h2 0) (== car-h3 1) (== car-step 'b1))
+                ((== car-h1 0) (== car-h2 1) (== car-h3 0) (== car-step 'r2))
+                ((== car-h1 0) (== car-h2 1) (== car-h3 1) (== car-step 'b2))
+                ((== car-h1 1) (== car-h2 1) (== car-h3 1) (== car-step 'b)))
+            (proof-stepo cdr-step cdr-h1 cdr-h2 cdr-h3))))))
+---
+
+There is a crucial detail missing in the proof step. And that is that $R_1$ and $R_2$ must be nonempty. So there must be at least one $r_1$ and at least one $r_2$ in the proof string.
+
+We can assert this by saying that the `step` must contain both an `r1` and an `r2`, and make the arbitrary choice that `r1` comes first, since the relation is symmetric.
+
+--- main.mk.scm +=
+(define nonempty-proof-stepo (lambda (step h1 h2 h3)
+    (fresh (rest)
+        (proof-stepo step h1 h2 h3)
+        (riffleo '(r1 r2) rest step))))
+---
+        
+--- There is a war
+;; (define waro (lambda (g h1 h2 h3)
+;; ))
+---
+
+--- main.mk.scm +=
+(define any-less-than-3o (lambda (h)
+    (fresh (car-h cdr-h)
+        (== h `(,car-h . ,cdr-h))
+        (conde
+            ((less-than-3o car-h))
+            ((any-less-than-3o cdr-h))))))
+---
+
+
+
+
+--- main.mk.scm +=
+(define less-than-3o (lambda (hyperedge)
+    (fresh (n)
+        (conde
+            ((== n 'z))
+            ((== n `(s . z)))
+            ((== n `(s s . z))))
+            
+        (sizeo hyperedge n))))
+     
+@{Sizeo}
+---
+
+@s The size of a hyperedge
+Since a hypergraph is a 0-1 matrix whose columns are vertices and whose rows are edges which contain those vertices, then the size of a hyperedge (represented as a list) is the number of 1s in it.
+
+
+--- Sizeo
+(define sizeo (lambda (hyperedge size)
+    (fresh (rest)
+        (conde
+            ((== hyperedge '()) (== size 'z))
+            ((== hyperedge `(0 . ,rest)) (sizeo rest size))
+            ((== hyperedge `(1 . ,rest)) (sizeo rest `(s . ,size)))))))
+---
+
+Applying Will's law
+
+--- Sizeo :=
+(define sizeo (lambda (hyperedge size)
+    (fresh (first rest size-rec)
+        (conde
+            ((== hyperedge '()) (== size 'z))
+            ((== hyperedge `(,first . ,rest))
+                (conde
+                    ((== first 0) (== size size-rec))
+                    ((== first 1) (== size `(s . ,size-rec))))
+                (sizeo rest size-rec))))))
+---
+
+
+@s Appendix
+
+Adapted from [here](https://github.com/schreiberbrett/cool-relations/blob/main/the-riffle-relation.md).
+
+--- The riffle relation
+(define riffleo (lambda (a b o)
+    (fresh (car-a cdr-a car-b cdr-b car-o cdr-o z0 z1)
+        (conde
+            ;; If `a` and `b` are both empty, then the output is empty.
+            ((== a '()) (== b '()) (== o '()))
+            
+            ;; If `a` is non-empty and `b` is empty, then the output is equal to `a`.
+            ((== a `(,car-a . ,cdr-a)) (== b '()) (== o a))
+            
+            ;; If `a` is empty and `b` is non-empty, then the output is equal to `b`.
+            ((== a '()) (== b `(,car-b . ,cdr-b)) (== o b))
+            
+            ;; When both `a` and `b` are non-empty
+            ((== a `(,car-a . ,cdr-a)) (== b `(,car-b . ,cdr-b)) (== o `(,car-o . ,cdr-o))
+                (conde
+                    ((== car-o car-a) (== z0 cdr-a) (== z1 b))
+                    ((== car-o car-b) (== z0 a) (== z1 cdr-b)))
+                    
+                (riffleo z0 z1 cdr-o))))))
+---
+
+
+
+
 @s Non-3-colorability and odd cycles
 Proving a graph $G$ is not 3-colorable involves operations on the odd cycles contained in the graph. Therefore it would be useful to collect a set of sets of vertices, where the outer set contains the inner set if and only if there is an odd cycle in $G$ containing exactly those vertices in the inner set.
 
@@ -20,27 +256,11 @@ A hypergraph would be the most appropriate data structure for representing this 
 
 ![test](../diagrams/odd-cycle-hypergraph.jpg "an odd cycle hypergraph")
 
-For example, consider the above graph $G$. It has 4 odd cycles drawn shown separately. Its odd cycle hypergraph $H$, also shown, is [non-simple](https://en.wikipedia.org/wiki/Hypergraph#Properties_of_hypergraphs), since two of its hyperedges contain the same set of vertices.
+For example, consider the above graph $G$, its 4 odd cycles, and its *odd cycle hypergraph*, $H$, which contains 4 hyperedges. It has 4 odd cycles drawn shown separately. Since two of the hyperedges have the exact same vertices, the hypergraph is [non-simple](https://en.wikipedia.org/wiki/Hypergraph#Properties_of_hypergraphs).
 
 
-An efficient representatino of a hypergraph is to use a two-dimensional boolean array where the rows are hyperedges and the columns are vertices. Each cell  $(e, v)$ holds the value `true` if vertex $v$ is included in the hyper-edge $e$, and `false` otherwise.
-
-@s Removing edges contained in other edges
-
-Since 
-
---- Hypergraph.ts
-
----
+An efficient representation of a hypergraph is to use a two-dimensional boolean array where the rows are hyperedges and the columns are vertices. Each cell  $(e, v)$ holds the value `true` if vertex $v$ is included in the hyper-edge $e$, and `false` otherwise.
 
 
 
-
---- brett.ts +=
-class Hypergraph<T> implements Set<Set<T>> {
-    constructor(finiteDomain: Set<T>) {
-
-    }
-}
----
 
