@@ -100,69 +100,9 @@ function helloWorld() {
 <pre class="prettyprint">
 (load "~/miniKanren/mk.scm")
 
-<span class="nocode pln">{The riffle relation, <a href="main.html#1:7">7</a>}</span>
+<span class="nocode pln">{The riffle relation, <a href="main.html#1:10">10</a>}</span>
 </pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a> and <a href="main.html#1:5">5</a></p>
-
-
-</div>
-
-<div class="codeblock">
-<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
-<pre class="prettyprint">
-(define produceso (lambda (moves g h)
-    (fresh
-<span class="nocode pln">        {Definitions, <a href="main.html#1:4">4</a>}</span>
-        (conde (
-<span class="nocode pln">            {When there are no moves, <a href="main.html#1:4">4</a>}</span>
-        ) (
-<span class="nocode pln">            {When there is a move, <a href="main.html#1:4">4</a>}</span>
-        ))
-    )
-))
-
-<span class="nocode pln">{There is a war, <a href="main.html#1:5">5</a>}</span>
-</pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a> and <a href="main.html#1:5">5</a></p>
-
-
-</div>
-<p>Either the list of "moves" is empty, in which case one of the hyperedges of the hypergraph <span class="math">h</span> I have now must be of size < 3.
-</p>
-
-<div class="codeblock">
-<span class="codeblock_name">{When there are no moves <a href="main.html#1:4">4</a>}</span>
-<pre class="prettyprint">
-(== moves (quote ()))
-(any-less-than-3o h)
-</pre>
-
-
-
-</div>
-<p>Or there exists a complete bipartite subgraph in <span class="math">G</span> between two hyperedges <span class="math">h_1</span> and <span class="math">h_2</span>. And the union of the survivors of <span class="math">h_1</span> and <span class="math">h_2</span> form <span class="math">h_3</span>, which then gets included in the next iteration.
-</p>
-
-<div class="codeblock">
-<span class="codeblock_name">{When there is a move <a href="main.html#1:4">4</a>}</span>
-<pre class="prettyprint">
-(fresh (rest-moves cbs h1 h2 h3)
-    (== moves `((,cbs ,h1 ,h2) . ,rest-moves))
-    (riffleo `(,h1 ,h2) rest-h h)
-    (waro g h1 h2 cbs h3)
-    (produceso rest-moves g `(,h3 . ,rest-h)))
-</pre>
-
-
-
-</div>
-
-<div class="codeblock">
-<span class="codeblock_name">{Definitions <a href="main.html#1:4">4</a>}</span>
-<pre class="prettyprint">
-(cbs h1 h2 h3)
-</pre>
-
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:10">10</a></p>
 
 
 </div>
@@ -183,6 +123,9 @@ function helloWorld() {
 </li>
 </ul>
 <p>Consider 6 disjoint sets:
+</p>
+<p>TODO: Replace the 1 and 2s in the below definition with ls and rs.
+In fact, we may not even need this symbol convention since it is entirely covered
 </p>
 <table>
     <tr>
@@ -228,74 +171,63 @@ function helloWorld() {
 <span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
 <pre class="prettyprint">
 
-(define proof-stepo (lambda (step h1 h2 h3)
+(define proof-stepo (lambda (step h-l h-r cbs h-out)
     (conde
-        ((== step '()) (== h1 '()) (== h2 '()) (== h3 '()))
-        ((fresh (car-h1 cdr-h1 car-h2 cdr-h2 car-h3 cdr-h3 car-step cdr-step)
+        ((== step '()) (== h-l '()) (== h-r '()) (== cbs '()) (== h-out '()))
+        ((fresh (car-h-l cdr-h-l car-h-r cdr-h-r car-h-out cdr-h-out car-step cdr-step car-cbs cdr-cbs)
             (== step `(,car-step . ,cdr-step))
-            (== h1 `(,car-h1 . ,cdr-h1))
-            (== h2 `(,car-h2 . ,cdr-h2))
-            (== h3 `(,car-h3 . ,cdr-h3))
+            (== h-l `(,car-h-l . ,cdr-h-l))
+            (== h-r `(,car-h-r . ,cdr-h-r))
+            (== cbs `(,car-cbs . ,cdr-cbs))
+            (== h-out `(,car-h-out . ,cdr-h-out))
             (conde
-                ((== car-h1 0) (== car-h2 0) (== car-h3 0) (== car-step 'o))
-                ((== car-h1 1) (== car-h2 0) (== car-h3 0) (== car-step 'r1))
-                ((== car-h1 1) (== car-h2 0) (== car-h3 1) (== car-step 'b1))
-                ((== car-h1 0) (== car-h2 1) (== car-h3 0) (== car-step 'r2))
-                ((== car-h1 0) (== car-h2 1) (== car-h3 1) (== car-step 'b2))
-                ((== car-h1 1) (== car-h2 1) (== car-h3 1) (== car-step 'b)))
-            (proof-stepo cdr-step cdr-h1 cdr-h2 cdr-h3))))))
+                ((== car-h-l 0) (== car-h-r 0) (== car-h-out 0) (== car-cbs 'o) (== car-step 'o))
+                ((== car-h-l 1) (== car-h-r 0) (== car-h-out 0) (== car-cbs 'l) (== car-step 'r1))
+                ((== car-h-l 1) (== car-h-r 0) (== car-h-out 1) (== car-cbs 'o) (== car-step 'b1))
+                ((== car-h-l 0) (== car-h-r 1) (== car-h-out 0) (== car-cbs 'r) (== car-step 'r2))
+                ((== car-h-l 0) (== car-h-r 1) (== car-h-out 1) (== car-cbs 'o) (== car-step 'b2))
+                ((== car-h-l 1) (== car-h-r 1) (== car-h-out 1) (== car-cbs 'o) (== car-step 'b)))
+            (proof-stepo cdr-step cdr-h-l cdr-h-r cdr-cbs cdr-h-out))))))
 </pre>
-<p class="seealso">Added to in sections <a href="main.html#1:4">4</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a> and <a href="main.html#1:5">5</a></p>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:10">10</a></p>
 
 
 </div>
-<p>There is a crucial detail missing in the proof step. And that is that <span class="math">R_1</span> and <span class="math">R_2</span> must be nonempty. So there must be at least one <span class="math">r_1</span> and at least one <span class="math">r_2</span> in the proof string.
-</p>
-<p>We can assert this by saying that the <code>step</code> must contain both an <code>r1</code> and an <code>r2</code>, and make the arbitrary choice that <code>r1</code> comes first, since the relation is symmetric.
+<p>There is a crucial detail missing in the proof step. And that is that <span class="math">R_1</span> and <span class="math">R_2</span> must be nonempty. Therefore it is trusted that the caller passes in cbs with a nonempty <strong>left</strong> and nonempty <strong>right</strong> side.
 </p>
 
 <div class="codeblock">
 <span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
 <pre class="prettyprint">
-(define nonempty-proof-stepo (lambda (step h1 h2 h3)
-    (fresh (rest)
-        (proof-stepo step h1 h2 h3)
-        (riffleo '(r1 r2) rest step))))
-</pre>
-<p class="seealso">Added to in sections <a href="main.html#1:4">4</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a> and <a href="main.html#1:5">5</a></p>
+(define proveso (lambda (h cbs steps)
+    (conde
+        ((== steps '()) (any-less-than-3o h))
+        ((fresh (step rest-steps h1 h2 h-l h-r h-out h-rest c rest-cbs new-cbs)
+            (== steps `(,step . ,rest-steps))
+            ;; Pick two hyperedges
+            (riffleo `(,h1 ,h2) h-rest h)
+            
+            ;; Order matters since one will be considered "left" and the other "right"
+            (riffleo `(,h-l) `(,h-r) `(,h1 ,h2))
+            
+            ;; Pick one cbs
+            (riffleo `(,c) rest-cbs cbs)
 
+            ;; These hyperedges must be connected
+            (proof-stepo step h-l h-r c h-out)
+            
+            (filter-cbso c rest-cbs new-cbs)
+            
+            ;; Recur on the rest of the steps with the newly-made h-out
+            (proveso `(,h-out . ,h-rest) new-cbs rest-steps))))))
 
-</div>
-
-<div class="codeblock">
-<span class="codeblock_name">{There is a war <a href="main.html#1:5">5</a>}</span>
-<pre class="prettyprint">
-;; (define waro (lambda (g h1 h2 h3)
-;; ))
-</pre>
-
-
-<p class="seealso">Used in section <a href="main.html#1:4">4</a></p>
-</div>
-
-<div class="codeblock">
-<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
-<pre class="prettyprint">
 (define any-less-than-3o (lambda (h)
     (fresh (car-h cdr-h)
         (== h `(,car-h . ,cdr-h))
         (conde
             ((less-than-3o car-h))
             ((any-less-than-3o cdr-h))))))
-</pre>
-<p class="seealso">Added to in sections <a href="main.html#1:4">4</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a> and <a href="main.html#1:5">5</a></p>
 
-
-</div>
-
-<div class="codeblock">
-<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
-<pre class="prettyprint">
 (define less-than-3o (lambda (hyperedge)
     (fresh (n)
         (conde
@@ -305,19 +237,82 @@ function helloWorld() {
             
         (sizeo hyperedge n))))
      
-<span class="nocode pln">{Sizeo, <a href="main.html#1:6">6</a>}</span>
+<span class="nocode pln">{Sizeo, <a href="main.html#1:8">8</a>}</span>
 </pre>
-<p class="seealso">Added to in sections <a href="main.html#1:4">4</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a> and <a href="main.html#1:5">5</a></p>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:10">10</a></p>
 
 
 </div>
 </div>
-<a name="1:6"><div class="section"><h4>6. The size of a hyperedge</h4></a>
+<a name="1:6"><div class="section"><h4>6. Definition of a complete bipartite subgraph</h4></a>
+<p>A complete bipartite subgraph in a graph with <span class="math">n</span> vertices can be represented as a list of length <span class="math">n</span>, where each element is one of the following.
+</p>
+<p><span class="math">l</span>
+: Belongs to the <strong>left</strong> side of the complete bipartite subgraph.
+</p>
+<p><span class="math">r</span>
+: Belongs to the <strong>right</strong> side of the complete bipartite subgraph.
+</p>
+<p><span class="math">o</span>
+: Not included in the complete bipartite subgraph.
+</p>
+
+</div>
+<a name="1:7"><div class="section"><h4>7. Discarding CBSes with used vertices</h4></a>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
+<pre class="prettyprint">
+(define ex-a '(l o r o l))
+(define ex-l '(
+    (l o o r o)
+    (r o l o o)
+    (o l o r o)
+    (o r r l o)))
+
+(define filter-cbso (lambda (x l o)
+    (conde
+        ((== l '()) (== o '()))
+        ((fresh (car-l cdr-l should-discard o-rest)
+            (== l `(,car-l . ,cdr-l))
+            (conde
+                ((== should-discard #f) (== o `(,car-l . ,o-rest)))
+                ((== should-discard #t) (== o o-rest)))
+            (overlapso x car-l should-discard)
+            (filter-cbso x cdr-l o-rest))))))
+
+(define overlapso (lambda (x y result)
+    (conde
+        ((== x '()) (== y '()) (== result #f))
+        ((fresh (car-x cdr-x car-y cdr-y)
+            (== x `(,car-x . ,cdr-x))
+            (== y `(,car-y . ,cdr-y))
+            (conde
+                (
+                    (== result #t)
+                    (conde
+                        ((== car-x 'l) (== car-y 'l))
+                        ((== car-x 'r) (== car-y 'l))
+                        ((== car-x 'l) (== car-y 'r))
+                        ((== car-x 'r) (== car-y 'r))))
+                (
+                    (conde
+                        ((== car-x 'o))
+                        ((== car-y 'o)))
+                        
+                    (overlapso cdr-x cdr-y result))))))))
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:10">10</a></p>
+
+
+</div>
+</div>
+<a name="1:8"><div class="section"><h4>8. The size of a hyperedge</h4></a>
 <p>Since a hypergraph is a 0-1 matrix whose columns are vertices and whose rows are edges which contain those vertices, then the size of a hyperedge (represented as a list) is the number of 1s in it.
 </p>
 
 <div class="codeblock">
-<span class="codeblock_name">{Sizeo <a href="main.html#1:6">6</a>}</span>
+<span class="codeblock_name">{Sizeo <a href="main.html#1:8">8</a>}</span>
 <pre class="prettyprint">
 (define sizeo (lambda (hyperedge size)
     (fresh (rest)
@@ -334,7 +329,7 @@ function helloWorld() {
 </p>
 
 <div class="codeblock">
-<span class="codeblock_name">{Sizeo <a href="main.html#1:6">6</a>} :=</span>
+<span class="codeblock_name">{Sizeo <a href="main.html#1:8">8</a>} :=</span>
 <pre class="prettyprint">
 (define sizeo (lambda (hyperedge size)
     (fresh (first rest size-rec)
@@ -351,12 +346,190 @@ function helloWorld() {
 <p class="seealso">Used in section <a href="main.html#1:5">5</a></p>
 </div>
 </div>
-<a name="1:7"><div class="section"><h4>7. Appendix</h4></a>
+<a name="1:9"><div class="section"><h4>9. Sample graph-hypergraphs to test on</h4></a>
+<p><img src="../diagrams/sample-graph-and-hypergraph.jpg" alt="Sample graph and hypergraph" title="A sample graph and hypergraph">
+</p>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
+<pre class="prettyprint">
+(define sample-hypergraph '(
+    (1 1 1 0 0 0 0 0 0)
+    (0 0 0 1 1 1 0 0 0)
+    (0 0 0 0 0 0 1 1 1)))
+    
+(define sample-graph '(
+    (0 0 0 1 0 0 0 0 0)
+    (0 0 0 0 0 0 1 0 0)
+    (0 0 0 0 0 0 1 0 0)
+    (1 0 0 0 0 0 0 0 0)
+    (0 0 0 0 0 0 1 0 0)
+    (0 0 0 0 0 0 1 0 0)
+    (0 1 1 0 1 1 0 0 0)
+    (0 0 0 0 0 0 0 0 0)
+    (0 0 0 0 0 0 0 0 0)))
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:10">10</a></p>
+
+
+</div>
+<p>I had to draw this smaller hypergraph because the above was taking longer than 5 minutes. I just want to see if <span class="math">proves^o</span> even works.
+</p>
+<p><img src="../diagrams/smaller-sample-graph-and-hypergraph.jpg" alt="Smaller sample graph and hypergraph" title="A smaller sample graph and hypergraph">
+</p>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
+<pre class="prettyprint">
+(define smaller-sample-hypergraph '(
+    (1 1 1 0)
+    (0 1 1 1)))
+
+(define smaller-sample-graph '(
+    (0 0 0 1)
+    (0 0 0 0)
+    (0 0 0 0)
+    (1 0 0 0)))
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:10">10</a></p>
+
+
+</div>
+<p>@ABC Example
+</p>
+<p><img src="../diagrams/abc-example.jpg" alt="ABC example" title="ABC example">
+</p>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
+<pre class="prettyprint">
+(define abc-example-hypergraph '(
+    (1 0 1 1 0 0 0 0 0)
+    (0 1 0 0 1 1 0 0 0)
+    (0 0 0 0 0 0 1 1 1)))
+
+(define abc-example-cbh '(
+    (l r o o o o o o o)
+    (o o o o o l r o o)
+    (o o o o l o r o o)
+    (o o o o l l r o o)
+    (o o o l o o r o o)
+    (o o o l o l r o o)
+    ;; (o o o l l o r o o) ;; This edge seems to add 8s to the search
+    (o o l l l l r o o)))
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:10">10</a></p>
+
+
+</div>
+<p>@K4 Example
+</p>
+<p>The simplest example, the base case <span class="math">K_4</span>.
+</p>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
+<pre class="prettyprint">
+(define k4-example-hypergraph '(
+    (1 1 1 0)
+    (0 1 1 1)))
+    
+(define k4-example-cbh '(
+    (l o o r)))
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:10">10</a></p>
+
+
+</div>
+<p>Testing filter-cbso
+</p>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
+<pre class="prettyprint">
+(define example-cbs
+    '(l l l l l l l l l l l l l l o o o))
+
+(define example-filter '(
+ (o o o o o o o o o o o o r o o o l)
+ (o o o o o o o o o o o l o o o o l)
+ (o o o o o o o o o o o r o o o o l)
+ (o o o o o o o o o o l o o o o o l)
+ (o o o o o o o o o o r o o o o o l)
+ (o o o o o o o o o l o o o o o o l)
+ (o o o o o o o o o r o o o o o o l)
+ (o o o o o o o o l o o o o o o o l)
+ (o o o o o o o o r o o o o o o o l)
+ (o o o o o o o l o o o o o o o o l)
+ (o o o o o o o r o o o o o o o o l)
+ (o o o o o o l o o o o o o o o o l)
+ (o o o o o o r o o o o o o o o o l)
+ (o o o o o l o o o o o o o o o o l)
+ (o o o o o r o o o o o o o o o o l)
+ (o o o o l o o o o o o o o o o o l)
+ (o o o o r o o o o o o o o o o o l)
+ (o o o l o o o o o o o o o o o o l)
+ (o o o r o o o o o o o o o o o o l)
+ (o o l o o o o o o o o o o o o o l)
+ (o o r o o o o o o o o o o o o o l)
+ (o l o o o o o o o o o o o o o o l)
+ (o r o o o o o o o o o o o o o o l)
+ (l o o o o o o o o o o o o o o o l)
+ (r o o o o o o o o o o o o o o o l)
+ (o o o o o o o o o o o o o o r o r)
+ (o o o o o o o o o o o o o o l l o)
+ (o o o o o o o o o o o o o l o o r)
+ (o o o o o o o o o o o o o o r l o)
+ (o o o o o o o o o o o o o r o o r)
+ (o o o o o o o o o o o o l o o o r)
+ (o o o o o o o o o o o o r o o o r)
+ (o o o o o o o o o o o l o o o o r)
+ (o o o o o o o o o o o r o o o o r)
+ (o o o o o o o o o o l o o o o o r)
+ (o o o o o o o o o o r o o o o o r)
+ (o o o o o o o o o l o o o o o o r)
+ (o o o o o o o o o r o o o o o o r)
+ (o o o o o o o o l o o o o o o o r)
+ (o o o o o o o o r o o o o o o o r)
+ (o o o o o o o l o o o o o o o o r)
+ (o o o o o o o r o o o o o o o o r)
+ (o o o o o o l o o o o o o o o o r)
+ (o o o o o o r o o o o o o o o o r)
+ (o o o o o l o o o o o o o o o o r)
+ (o o o o o r o o o o o o o o o o r)
+ (o o o o l o o o o o o o o o o o r)
+ (o o o o r o o o o o o o o o o o r)
+ (o o o l o o o o o o o o o o o o r)
+ (o o o r o o o o o o o o o o o o r)
+ (o o l o o o o o o o o o o o o o r)
+ (o o r o o o o o o o o o o o o o r)
+ (o l o o o o o o o o o o o o o o r)
+ (o r o o o o o o o o o o o o o o r)
+ (l o o o o o o o o o o o o o o o r)))
+
+    
+(define is-cbs (lambda (l)
+    (conde
+        ((== l '()))
+        ((fresh (car-l cdr-l)
+            (== l `(,car-l . ,cdr-l))
+            (conde
+                ((== car-l 'o))
+                ((== car-l 'l))
+                ((== car-l 'r)))
+            (is-cbs cdr-l))))))
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:10">10</a></p>
+
+
+</div>
+</div>
+<a name="1:10"><div class="section"><h4>10. Appendix A: The Riffle Relation</h4></a>
 <p>Adapted from <a href="https://github.com/schreiberbrett/cool-relations/blob/main/the-riffle-relation.md">here</a>.
 </p>
 
 <div class="codeblock">
-<span class="codeblock_name">{The riffle relation <a href="main.html#1:7">7</a>}</span>
+<span class="codeblock_name">{The riffle relation <a href="main.html#1:10">10</a>}</span>
 <pre class="prettyprint">
 (define riffleo (lambda (a b o)
     (fresh (car-a cdr-a car-b cdr-b car-o cdr-o z0 z1)
@@ -382,8 +555,138 @@ function helloWorld() {
 
 <p class="seealso">Used in section <a href="main.html#1:4">4</a></p>
 </div>
+<p>Another useful relation
+</p>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
+<pre class="prettyprint">
+(define same-lengtho (lambda (a b)
+    (conde
+        ((== a '()) (== b '()))
+        ((fresh (x y z w)
+            (== a `(,x . ,y))
+            (== b `(,z . ,w))
+            (same-lengtho y w))))))
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:9">9</a></p>
+
+
 </div>
-<a name="1:8"><div class="section"><h4>8. Non-3-colorability and odd cycles</h4></a>
+</div>
+<a name="1:11"><div class="section"><h4>11. Appendix B: immutable LinkedList implementation with constant-time, linkedList.Remove2Add1()</h4></a>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>Remove2Add1Test.java</strong> <a href="main.html#1:11">11</a>}</span>
+<pre class="prettyprint">
+public class Remove2Add1Test {
+    public static void Main(String[] args) {
+        var dcba = new R2A1LinkedList&lt;String&gt;({"d", "c", "b", "a"});
+        
+        // Require callers to ensure that i &lt; j
+        var eba = dbca.remove2add1(0, 1, "e");
+        var fd = edb.remove2add1(0, 2, "f");
+
+        System.out.println("dbca: " + dbca.deepEquals({"d", "b", "c"));
+        Syntem.out.println("eda: " + eda.deepEquals({"e", "b", "a"}));
+        System.out.println("fd: " + eda.deepEquals({"f", "d"}));
+    }
+}
+</pre>
+
+
+
+</div>
+</div>
+<a name="1:12"><div class="section"><h4>12. Appendix C: A translation of "proves" into Prolog</h4></a>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.pl</strong> <a href="main.html#1:12">12</a>}</span>
+<pre class="prettyprint">
+riffle([], [], []).
+riffle([A|As], [], [A|As]).
+riffle([], [B|Bs], [B|Bs]).
+
+riffle([A|As], [B|Bs], [A|Os]) :-
+    riffle(As, [B|Bs], Os).
+
+riffle([A|As], [B|Bs], [B|Os]) :-
+    riffle([A|As], Bs, Os).
+
+
+
+proof_step([], [], [], [], []).
+proof_step([Step|Steps], 
+           [Hleft|Hlefts],
+           [Hright|Hrights],
+           [C|Cbs],
+           [Hout|Houts]) :-
+    is_proof_step(Step, Hleft, Hright, C, Hout),
+    proof_step(Steps, Hlefts, Hrights, Cbs, Houts).
+
+is_proof_step(0, 0, 0, o, o).
+is_proof_step(1, 0, 0, l, r1).
+is_proof_step(1, 0, 1, o, b1).
+is_proof_step(0, 1, 0, r, r2).
+is_proof_step(0, 1, 1, o, b2).
+is_proof_step(1, 1, 1, o, b).
+
+
+proves(H, _, []) :- any_less_than_three(H).
+proves(H, Cbs, [Step|Steps]) :-
+    riffle([H1, H2], Hrest, H),
+    riffle([HL], [HR], [H1, H2]),
+    riffle([C], Crest, Cbs),
+    proof_step(Step, HL, HR, C, Hout),
+    filter_cbs(C, Crest, NewCbs),
+    proves([Hout|Hrest], NewCbs, Steps).
+
+
+any_less_than_three([H|_]) :- less_than_three(H).
+any_less_than_three([_|Hs]) :- any_less_than_three(Hs).
+
+less_than_three(X) :- size(X, z).
+less_than_three(X) :- size(X, s(z)).
+less_than_three(X) :- size(X, s(s(z))).
+                           
+size([], z).
+size([0|Xs], N) :- size(Xs, N).
+size([1|Xs], s(N)) :- size(Xs, N).
+
+
+filter_cbs(_, [], []).
+filter_cbs(X, [L|Ls], [L|Os]) :-
+    overlaps(X, L, f),
+    filter_cbs(X, Ls, Os).
+filter_cbs(X, [L|Ls], Os) :-
+    overlaps(X, L, t),
+    filter_cbs(X, Ls, Os).
+
+overlaps([], [], f).
+overlaps([l|_], [l|_], t).
+overlaps([l|_], [r|_], t).
+overlaps([r|_], [l|_], t).
+overlaps([r|_], [r|_], t).
+
+overlaps([o|Xs], [Y|Ys], B) :-
+    overlaps(Xs, Ys, B).
+
+overlaps([X|Xs], [o|Ys], B) :-
+    overlaps(Xs, Ys, B).
+
+k4_hypergraph([
+	[1, 1, 1, 0],
+	[0, 1, 1, 0]]).
+
+k4_cbs([
+	[l, o, o, r]]).
+</pre>
+
+
+
+</div>
+</div>
+<a name="1:13"><div class="section"><h4>13. Non-3-colorability and odd cycles</h4></a>
 <p>Proving a graph <span class="math">G</span> is not 3-colorable involves operations on the odd cycles contained in the graph. Therefore it would be useful to collect a set of sets of vertices, where the outer set contains the inner set if and only if there is an odd cycle in <span class="math">G</span> containing exactly those vertices in the inner set.
 </p>
 <p>A hypergraph would be the most appropriate data structure for representing this set-of-sets since the innermost elements are vertices corresponding to vertices of the original graph <span class="math">G</span>. Let's call this an <strong>odd cycle hypergraph</strong> <span class="math">H</span> that can be generated from <span class="math">G</span>.
