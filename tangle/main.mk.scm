@@ -20,45 +20,45 @@
                     
                 (riffleo z0 z1 cdr-o))))))
 
+(define roleo (lambda (role el er biclique eo)
+    (fresh (x)
+        (== x `(,role ,el ,er ,biclique ,eo))
+        (conde
+            ((== x '(a 1 0 l 0)))
+            ((== x '(b 0 1 r 0)))
+            ((== x '(u 1 0 o 1)))
+            ((== x '(v 0 1 o 1)))
+            ((== x '(w 1 1 o 1)))
+            ((== x '(o 0 0 o 0)))))))
 
-(define proof-stepo (lambda (step h-l h-r cbs h-out)
+(define all-roleso (lambda (a b c d e)
     (conde
-        ((== step '()) (== h-l '()) (== h-r '()) (== cbs '()) (== h-out '()))
-        ((fresh (car-h-l cdr-h-l car-h-r cdr-h-r car-h-out cdr-h-out car-step cdr-step car-cbs cdr-cbs)
-            (== step `(,car-step . ,cdr-step))
-            (== h-l `(,car-h-l . ,cdr-h-l))
-            (== h-r `(,car-h-r . ,cdr-h-r))
-            (== cbs `(,car-cbs . ,cdr-cbs))
-            (== h-out `(,car-h-out . ,cdr-h-out))
-            (conde
-                ((== car-h-l 0) (== car-h-r 0) (== car-h-out 0) (== car-cbs 'o) (== car-step 'o))
-                ((== car-h-l 1) (== car-h-r 0) (== car-h-out 0) (== car-cbs 'l) (== car-step 'r1))
-                ((== car-h-l 1) (== car-h-r 0) (== car-h-out 1) (== car-cbs 'o) (== car-step 'b1))
-                ((== car-h-l 0) (== car-h-r 1) (== car-h-out 0) (== car-cbs 'r) (== car-step 'r2))
-                ((== car-h-l 0) (== car-h-r 1) (== car-h-out 1) (== car-cbs 'o) (== car-step 'b2))
-                ((== car-h-l 1) (== car-h-r 1) (== car-h-out 1) (== car-cbs 'o) (== car-step 'b)))
-            (proof-stepo cdr-step cdr-h-l cdr-h-r cdr-cbs cdr-h-out))))))
-(define proveso (lambda (h cbs steps)
+        ((== `(,a ,b ,c ,d ,e) '(() () () () ())))
+        ((fresh (car-a cdr-a car-b cdr-b car-c cdr-c car-d cdr-d car-e cdr-e)
+            (== `(,a ,b ,c ,d ,e) `((,car-a . ,cdr-a) (,car-b . ,cdr-b) (,car-c . ,cdr-c) (,car-d . ,cdr-d) (,car-e . ,cdr-e)))
+            (roleo car-a car-b car-c car-d car-e)
+            (all-roleso cdr-a cdr-b cdr-c cdr-d cdr-e))))))
+(define proveso (lambda (hypergraph bicliques steps)
     (conde
-        ((== steps '()) (any-less-than-3o h))
-        ((fresh (step rest-steps h1 h2 h-l h-r h-out h-rest c rest-cbs new-cbs)
+        ((== steps '()) (any-less-than-3o hypergraph))
+        ((fresh (step rest-steps e1 e2 el er eo rest-hyperedges biclique rest-bicliques filtered-bicliques)
             (== steps `(,step . ,rest-steps))
             ;; Pick two hyperedges
-            (riffleo `(,h1 ,h2) h-rest h)
+            (riffleo `(,e1 ,e2) rest-hyperedges hypergraph)
             
             ;; Order matters since one will be considered "left" and the other "right"
-            (riffleo `(,h-l) `(,h-r) `(,h1 ,h2))
+            (riffleo `(,el) `(,er) `(,e1 ,e2))
             
             ;; Pick one cbs
-            (riffleo `(,c) rest-cbs cbs)
+            (riffleo `(,biclique) rest-bicliques bicliques)
 
             ;; These hyperedges must be connected
-            (proof-stepo step h-l h-r c h-out)
+            (all-roleso step el er biclique eo)
             
-            (filter-cbso c rest-cbs new-cbs)
+            (filter-bicliqueso biclique rest-bicliques filtered-bicliques)
             
             ;; Recur on the rest of the steps with the newly-made h-out
-            (proveso `(,h-out . ,h-rest) new-cbs rest-steps))))))
+            (proveso `(,eo . ,rest-hyperedges) filtered-bicliques rest-steps))))))
 
 (define any-less-than-3o (lambda (h)
     (fresh (car-h cdr-h)
@@ -86,81 +86,79 @@
                     ((== first 1) (== size `(s . ,size-rec))))
                 (sizeo rest size-rec))))))
 
-(define ex-a '(l o r o l))
-(define ex-l '(
-    (l o o r o)
-    (r o l o o)
-    (o l o r o)
-    (o r r l o)))
-
-(define filter-cbso (lambda (x l o)
+(define filter-bicliqueso (lambda (x l o)
     (conde
         ((== l '()) (== o '()))
-        ((fresh (car-l cdr-l should-discard o-rest)
+        ((fresh (car-l cdr-l o-rest)
             (== l `(,car-l . ,cdr-l))
             (conde
-                ((== should-discard #f) (== o `(,car-l . ,o-rest)))
-                ((== should-discard #t) (== o o-rest)))
-            (overlapso x car-l should-discard)
-            (filter-cbso x cdr-l o-rest))))))
+                ((== o `(,car-l . ,o-rest))
+                    (all-disjointo x car-l))
+                ((== o o-rest)
+                    (any-overlapo x car-l)))
+            (filter-bicliqueso x cdr-l o-rest))))))
 
-(define overlapso (lambda (x y result)
+(define overlapo (lambda (u v)
+    (fresh (x)
+        (== x `(,u ,v))
+        (conde
+            ((== x '(l l)))
+            ((== x '(l r)))
+            ((== x '(r l)))
+            ((== x '(r r)))))))
+
+(define any-overlapo (lambda (x y)
+    (fresh (car-x cdr-x car-y cdr-y)
+        (== x `(,car-x . ,cdr-x))
+        (== y `(,car-y . ,cdr-y))
+        (conde
+            ((overlapo car-x car-y))
+            ((any-overlapo cdr-x cdr-y))))))
+
+(define disjoint2o (lambda (u v)
     (conde
-        ((== x '()) (== y '()) (== result #f))
+        ((== u 'o))
+        ((== v 'o)))))
+
+(define disjointo (lambda (u v)
+    (fresh (x)
+        (== x `(,u ,v))
+        (conde
+            ((== x '(l o)))
+            ((== x '(r o)))
+            ((== x '(o o)))
+            ((== x '(o r)))
+            ((== x '(o l)))))))
+        
+(define all-disjointo (lambda (x y)
+    (conde
+        ((== x '()) (== y '()))
         ((fresh (car-x cdr-x car-y cdr-y)
             (== x `(,car-x . ,cdr-x))
             (== y `(,car-y . ,cdr-y))
-            (conde
-                (
-                    (== result #t)
-                    (conde
-                        ((== car-x 'l) (== car-y 'l))
-                        ((== car-x 'r) (== car-y 'l))
-                        ((== car-x 'l) (== car-y 'r))
-                        ((== car-x 'r) (== car-y 'r))))
-                (
-                    (conde
-                        ((== car-x 'o))
-                        ((== car-y 'o)))
-                        
-                    (overlapso cdr-x cdr-y result))))))))
-(define sample-hypergraph '(
-    (1 1 1 0 0 0 0 0 0)
-    (0 0 0 1 1 1 0 0 0)
-    (0 0 0 0 0 0 1 1 1)))
-    
-(define sample-graph '(
-    (0 0 0 1 0 0 0 0 0)
-    (0 0 0 0 0 0 1 0 0)
-    (0 0 0 0 0 0 1 0 0)
-    (1 0 0 0 0 0 0 0 0)
-    (0 0 0 0 0 0 1 0 0)
-    (0 0 0 0 0 0 1 0 0)
-    (0 1 1 0 1 1 0 0 0)
-    (0 0 0 0 0 0 0 0 0)
-    (0 0 0 0 0 0 0 0 0)))
-(define smaller-sample-hypergraph '(
-    (1 1 1 0)
-    (0 1 1 1)))
-
-(define smaller-sample-graph '(
-    (0 0 0 1)
-    (0 0 0 0)
-    (0 0 0 0)
-    (1 0 0 0)))
-(define abc-example-hypergraph '(
+            (disjointo car-x car-y)
+            (all-disjointo cdr-x cdr-y))))))
+(define abc-hypergraph '(
     (1 0 1 1 0 0 0 0 0)
     (0 1 0 0 1 1 0 0 0)
     (0 0 0 0 0 0 1 1 1)))
 
-(define abc-example-cbh '(
+(define abc-bicliques '(
     (l r o o o o o o o)
     (o o o o o l r o o)
     (o o o o l o r o o)
     (o o o o l l r o o)
     (o o o l o o r o o)
     (o o o l o l r o o)
-    ;; (o o o l l o r o o) ;; This edge seems to add 8s to the search
+    (o o o l l o r o o)
+    (o o o l l l r o o)
+    (o o l o o o r o o)
+    (o o l o o l r o o)
+    (o o l o l o r o o)
+    (o o l o l l r o o)
+    (o o l l o o r o o)
+    (o o l l o l r o o)
+    (o o l l l o r o o)
     (o o l l l l r o o)))
 (define k4-example-hypergraph '(
     (1 1 1 0)
@@ -168,77 +166,6 @@
     
 (define k4-example-cbh '(
     (l o o r)))
-(define example-cbs
-    '(l l l l l l l l l l l l l l o o o))
-
-(define example-filter '(
- (o o o o o o o o o o o o r o o o l)
- (o o o o o o o o o o o l o o o o l)
- (o o o o o o o o o o o r o o o o l)
- (o o o o o o o o o o l o o o o o l)
- (o o o o o o o o o o r o o o o o l)
- (o o o o o o o o o l o o o o o o l)
- (o o o o o o o o o r o o o o o o l)
- (o o o o o o o o l o o o o o o o l)
- (o o o o o o o o r o o o o o o o l)
- (o o o o o o o l o o o o o o o o l)
- (o o o o o o o r o o o o o o o o l)
- (o o o o o o l o o o o o o o o o l)
- (o o o o o o r o o o o o o o o o l)
- (o o o o o l o o o o o o o o o o l)
- (o o o o o r o o o o o o o o o o l)
- (o o o o l o o o o o o o o o o o l)
- (o o o o r o o o o o o o o o o o l)
- (o o o l o o o o o o o o o o o o l)
- (o o o r o o o o o o o o o o o o l)
- (o o l o o o o o o o o o o o o o l)
- (o o r o o o o o o o o o o o o o l)
- (o l o o o o o o o o o o o o o o l)
- (o r o o o o o o o o o o o o o o l)
- (l o o o o o o o o o o o o o o o l)
- (r o o o o o o o o o o o o o o o l)
- (o o o o o o o o o o o o o o r o r)
- (o o o o o o o o o o o o o o l l o)
- (o o o o o o o o o o o o o l o o r)
- (o o o o o o o o o o o o o o r l o)
- (o o o o o o o o o o o o o r o o r)
- (o o o o o o o o o o o o l o o o r)
- (o o o o o o o o o o o o r o o o r)
- (o o o o o o o o o o o l o o o o r)
- (o o o o o o o o o o o r o o o o r)
- (o o o o o o o o o o l o o o o o r)
- (o o o o o o o o o o r o o o o o r)
- (o o o o o o o o o l o o o o o o r)
- (o o o o o o o o o r o o o o o o r)
- (o o o o o o o o l o o o o o o o r)
- (o o o o o o o o r o o o o o o o r)
- (o o o o o o o l o o o o o o o o r)
- (o o o o o o o r o o o o o o o o r)
- (o o o o o o l o o o o o o o o o r)
- (o o o o o o r o o o o o o o o o r)
- (o o o o o l o o o o o o o o o o r)
- (o o o o o r o o o o o o o o o o r)
- (o o o o l o o o o o o o o o o o r)
- (o o o o r o o o o o o o o o o o r)
- (o o o l o o o o o o o o o o o o r)
- (o o o r o o o o o o o o o o o o r)
- (o o l o o o o o o o o o o o o o r)
- (o o r o o o o o o o o o o o o o r)
- (o l o o o o o o o o o o o o o o r)
- (o r o o o o o o o o o o o o o o r)
- (l o o o o o o o o o o o o o o o r)))
-
-    
-(define is-cbs (lambda (l)
-    (conde
-        ((== l '()))
-        ((fresh (car-l cdr-l)
-            (== l `(,car-l . ,cdr-l))
-            (conde
-                ((== car-l 'o))
-                ((== car-l 'l))
-                ((== car-l 'r)))
-            (is-cbs cdr-l))))))
 (define same-lengtho (lambda (a b)
     (conde
         ((== a '()) (== b '()))

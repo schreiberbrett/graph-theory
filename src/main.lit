@@ -53,97 +53,101 @@ Now we must verify that there is indeed a conflict between $h_1$ and $h_2$. So w
     - the second half is in h2 and not in h1
 - h3 is the union of the vertices in h1 and h2 that are not in the cbs
 
-Consider 6 disjoint sets:
-
-TODO: Replace the 1 and 2s in the below definition with ls and rs.
-In fact, we may not even need this symbol convention since it is entirely covered
-
+Consider 6 disjoint roles that a vertex could be in:
 
 <table>
     <tr>
-        <th>Name</th><th>Stands for</th><th>Description</th>
+        <th>Role name</th>
+        <th>Included in $e_l$?</th>
+        <th>Included in $e_r$?</th>
+        <th>Role within the complete bipartite subgraph</th>
+        <th>Included in $e_o$?</th>
     </tr>
     <tr>
-        <td>$r_1$</td>
-        <td>Rivals 1</td>
-        <td>The partition of the CBS contained in $h_1$ </td>
+        <td>$a$</td><td>1</td><td>0</td><td>$L$</td><td>0</td>
     </tr>
     <tr>
-        <td>$r_2$</td>
-        <td>Rivals 2</td>
-        <td>The partition of the CBS contained in $h_2$ </td>
+        <td>$b$</td><td>0</td><td>1</td><td>$R$</td><td>0</td>
     </tr>
     <tr>
-        <td>$b_1$</td>
-        <td>Bystanders 1</td>
-        <td>The vertices contained in $h_1$ but not $h_2$, and not in the CBS.</td>
+        <td>$u$</td><td>1</td><td>0</td><td>$N$</td><td>1</td>
     </tr>
     <tr>
-        <td>$b_2$</td>
-        <td>Bystanders 2</td>
-        <td>The vertices contained in $h_2$ but not $h_1$, and not in the CBS.</td>
+        <td>$v$</td><td>0</td><td>1</td><td>$N$</td><td>1</td>
     </tr>
     <tr>
-        <td>$b$</td>
-        <td>Bystanders (both)</td>
-        <td>The vertices contained in both $h_1$ and $h_2$, but not in the CBS.</td>
+        <td>$w$</td><td>1</td><td>1</td><td>$N$</td><td>1</td>
     </tr>
     <tr>
-        <td>$o$</td>
-        <td>Outsiders</td>
-        <td>The vertices not contained in either $h_1$ or $h_2$.</td>
+        <td>$o$</td><td>0</td><td>0</td><td>$N$</td><td>0</td>
     </tr>
 </table>
 
-![test](../diagrams/h1-h2-relationship.jpg "The relationship between h1 and h2")
+Below is an example with six vertices, one in each role and labelled by its role. The left includes the hyperedges $e_l$ and $e_r$, the right includes the hyperedge $e_o$.
 
-The above definition, in a relationship with $h_1$ and $h_2$. This is how proof steps are encoded.
+![the six roles](../diagrams/the-six-roles.jpg "The six different roles, visualized")
+
+
+--- main.mk.scm +=
+(define roleo (lambda (role el er biclique eo)
+    (fresh (x)
+        (== x `(,role ,el ,er ,biclique ,eo))
+        (conde
+            ((== x '(a 1 0 l 0)))
+            ((== x '(b 0 1 r 0)))
+            ((== x '(u 1 0 o 1)))
+            ((== x '(v 0 1 o 1)))
+            ((== x '(w 1 1 o 1)))
+            ((== x '(o 0 0 o 0)))))))
+---
+
+Later, we may want to allow choosing to *not* use an edge in the provided CBS. This would give us flexibility to pass in just the maximal CBSes, rather than all $2^n$ combinations of each CBS.
+
 
 --- main.mk.scm +=
 
-(define proof-stepo (lambda (step h-l h-r cbs h-out)
+(define all-roleso (lambda (a b c d e)
     (conde
-        ((== step '()) (== h-l '()) (== h-r '()) (== cbs '()) (== h-out '()))
-        ((fresh (car-h-l cdr-h-l car-h-r cdr-h-r car-h-out cdr-h-out car-step cdr-step car-cbs cdr-cbs)
-            (== step `(,car-step . ,cdr-step))
-            (== h-l `(,car-h-l . ,cdr-h-l))
-            (== h-r `(,car-h-r . ,cdr-h-r))
-            (== cbs `(,car-cbs . ,cdr-cbs))
-            (== h-out `(,car-h-out . ,cdr-h-out))
-            (conde
-                ((== car-h-l 0) (== car-h-r 0) (== car-h-out 0) (== car-cbs 'o) (== car-step 'o))
-                ((== car-h-l 1) (== car-h-r 0) (== car-h-out 0) (== car-cbs 'l) (== car-step 'r1))
-                ((== car-h-l 1) (== car-h-r 0) (== car-h-out 1) (== car-cbs 'o) (== car-step 'b1))
-                ((== car-h-l 0) (== car-h-r 1) (== car-h-out 0) (== car-cbs 'r) (== car-step 'r2))
-                ((== car-h-l 0) (== car-h-r 1) (== car-h-out 1) (== car-cbs 'o) (== car-step 'b2))
-                ((== car-h-l 1) (== car-h-r 1) (== car-h-out 1) (== car-cbs 'o) (== car-step 'b)))
-            (proof-stepo cdr-step cdr-h-l cdr-h-r cdr-cbs cdr-h-out))))))
+        ((== `(,a ,b ,c ,d ,e) '(() () () () ())))
+        ((fresh (car-a cdr-a car-b cdr-b car-c cdr-c car-d cdr-d car-e cdr-e)
+            (== `(,a ,b ,c ,d ,e) `((,car-a . ,cdr-a) (,car-b . ,cdr-b) (,car-c . ,cdr-c) (,car-d . ,cdr-d) (,car-e . ,cdr-e)))
+            (roleo car-a car-b car-c car-d car-e)
+            (all-roleso cdr-a cdr-b cdr-c cdr-d cdr-e))))))
 ---
 
 There is a crucial detail missing in the proof step. And that is that $R_1$ and $R_2$ must be nonempty. Therefore it is trusted that the caller passes in cbs with a nonempty **left** and nonempty **right** side.
 
 --- main.mk.scm +=
-(define proveso (lambda (h cbs steps)
+(define proveso (lambda (hypergraph bicliques steps)
     (conde
-        ((== steps '()) (any-less-than-3o h))
-        ((fresh (step rest-steps h1 h2 h-l h-r h-out h-rest c rest-cbs new-cbs)
+        ((== steps '()) (any-less-than-3o hypergraph))
+        ((fresh (step rest-steps e1 e2 el er eo rest-hyperedges biclique rest-bicliques filtered-bicliques)
             (== steps `(,step . ,rest-steps))
             ;; Pick two hyperedges
-            (riffleo `(,h1 ,h2) h-rest h)
+            (riffleo `(,e1 ,e2) rest-hyperedges hypergraph)
             
             ;; Order matters since one will be considered "left" and the other "right"
-            (riffleo `(,h-l) `(,h-r) `(,h1 ,h2))
+            (riffleo `(,el) `(,er) `(,e1 ,e2))
             
-            ;; Pick one cbs
-            (riffleo `(,c) rest-cbs cbs)
+            ;; Pick one biclique
+            (riffleo `(,biclique) rest-bicliques bicliques)
 
             ;; These hyperedges must be connected
-            (proof-stepo step h-l h-r c h-out)
+            (all-roleso step el er biclique eo)
             
-            (filter-cbso c rest-cbs new-cbs)
+            (filter-bicliqueso biclique rest-bicliques filtered-bicliques)
             
-            ;; Recur on the rest of the steps with the newly-made h-out
-            (proveso `(,h-out . ,h-rest) new-cbs rest-steps))))))
+            ;; Recur on the rest of the steps with the new hypergraph
+            (proveso `(,eo . ,rest-hyperedges) filtered-bicliques rest-steps))))))
+
+(define less-than-3o (lambda (hyperedge)
+    (fresh (n)
+        (conde
+            ((== n '(z)))
+            ((== n '(s z)))
+            ((== n '(s s z))))
+            
+        (sizeo hyperedge n))))
 
 (define any-less-than-3o (lambda (h)
     (fresh (car-h cdr-h)
@@ -152,71 +156,76 @@ There is a crucial detail missing in the proof step. And that is that $R_1$ and 
             ((less-than-3o car-h))
             ((any-less-than-3o cdr-h))))))
 
-(define less-than-3o (lambda (hyperedge)
-    (fresh (n)
-        (conde
-            ((== n 'z))
-            ((== n `(s . z)))
-            ((== n `(s s . z))))
-            
-        (sizeo hyperedge n))))
-     
 @{Sizeo}
 ---
 
 @s Definition of a complete bipartite subgraph
 A complete bipartite subgraph in a graph with $n$ vertices can be represented as a list of length $n$, where each element is one of the following.
 
-$l$
+$L$
 : Belongs to the **left** side of the complete bipartite subgraph.
 
-$r$
+$R$
 : Belongs to the **right** side of the complete bipartite subgraph.
 
-$o$
-: Not included in the complete bipartite subgraph.
+$N$
+: Neither. Not included in the complete bipartite subgraph.
 
 @s Discarding CBSes with used vertices
 
 --- main.mk.scm +=
-(define ex-a '(l o r o l))
-(define ex-l '(
-    (l o o r o)
-    (r o l o o)
-    (o l o r o)
-    (o r r l o)))
-
-(define filter-cbso (lambda (x l o)
+(define filter-bicliqueso (lambda (x l o)
     (conde
         ((== l '()) (== o '()))
-        ((fresh (car-l cdr-l should-discard o-rest)
+        ((fresh (car-l cdr-l o-rest)
             (== l `(,car-l . ,cdr-l))
             (conde
-                ((== should-discard #f) (== o `(,car-l . ,o-rest)))
-                ((== should-discard #t) (== o o-rest)))
-            (overlapso x car-l should-discard)
-            (filter-cbso x cdr-l o-rest))))))
+                ((== o `(,car-l . ,o-rest))
+                    (all-disjointo x car-l))
+                ((== o o-rest)
+                    (any-overlapo x car-l)))
+            (filter-bicliqueso x cdr-l o-rest))))))
 
-(define overlapso (lambda (x y result)
+(define overlapo (lambda (u v)
+    (fresh (x)
+        (== x `(,u ,v))
+        (conde
+            ((== x '(l l)))
+            ((== x '(l r)))
+            ((== x '(r l)))
+            ((== x '(r r)))))))
+
+(define any-overlapo (lambda (x y)
+    (fresh (car-x cdr-x car-y cdr-y)
+        (== x `(,car-x . ,cdr-x))
+        (== y `(,car-y . ,cdr-y))
+        (conde
+            ((overlapo car-x car-y))
+            ((any-overlapo cdr-x cdr-y))))))
+
+(define disjoint2o (lambda (u v)
     (conde
-        ((== x '()) (== y '()) (== result #f))
+        ((== u 'o))
+        ((== v 'o)))))
+
+(define disjointo (lambda (u v)
+    (fresh (x)
+        (== x `(,u ,v))
+        (conde
+            ((== x '(l o)))
+            ((== x '(r o)))
+            ((== x '(o o)))
+            ((== x '(o r)))
+            ((== x '(o l)))))))
+        
+(define all-disjointo (lambda (x y)
+    (conde
+        ((== x '()) (== y '()))
         ((fresh (car-x cdr-x car-y cdr-y)
             (== x `(,car-x . ,cdr-x))
             (== y `(,car-y . ,cdr-y))
-            (conde
-                (
-                    (== result #t)
-                    (conde
-                        ((== car-x 'l) (== car-y 'l))
-                        ((== car-x 'r) (== car-y 'l))
-                        ((== car-x 'l) (== car-y 'r))
-                        ((== car-x 'r) (== car-y 'r))))
-                (
-                    (conde
-                        ((== car-x 'o))
-                        ((== car-y 'o)))
-                        
-                    (overlapso cdr-x cdr-y result))))))))
+            (disjointo car-x car-y)
+            (all-disjointo cdr-x cdr-y))))))
 ---
 
 
@@ -228,7 +237,7 @@ Since a hypergraph is a 0-1 matrix whose columns are vertices and whose rows are
 (define sizeo (lambda (hyperedge size)
     (fresh (rest)
         (conde
-            ((== hyperedge '()) (== size 'z))
+            ((== hyperedge '()) (== size '(z)))
             ((== hyperedge `(0 . ,rest)) (sizeo rest size))
             ((== hyperedge `(1 . ,rest)) (sizeo rest `(s . ,size)))))))
 ---
@@ -247,62 +256,32 @@ Applying Will's law
                 (sizeo rest size-rec))))))
 ---
 
-@s Sample graph-hypergraphs to test on
-
-![Sample graph and hypergraph](../diagrams/sample-graph-and-hypergraph.jpg "A sample graph and hypergraph")
-
---- main.mk.scm +=
-(define sample-hypergraph '(
-    (1 1 1 0 0 0 0 0 0)
-    (0 0 0 1 1 1 0 0 0)
-    (0 0 0 0 0 0 1 1 1)))
-    
-(define sample-graph '(
-    (0 0 0 1 0 0 0 0 0)
-    (0 0 0 0 0 0 1 0 0)
-    (0 0 0 0 0 0 1 0 0)
-    (1 0 0 0 0 0 0 0 0)
-    (0 0 0 0 0 0 1 0 0)
-    (0 0 0 0 0 0 1 0 0)
-    (0 1 1 0 1 1 0 0 0)
-    (0 0 0 0 0 0 0 0 0)
-    (0 0 0 0 0 0 0 0 0)))
----
-
-I had to draw this smaller hypergraph because the above was taking longer than 5 minutes. I just want to see if $proves^o$ even works.
-
-![Smaller sample graph and hypergraph](../diagrams/smaller-sample-graph-and-hypergraph.jpg "A smaller sample graph and hypergraph")
-
---- main.mk.scm +=
-(define smaller-sample-hypergraph '(
-    (1 1 1 0)
-    (0 1 1 1)))
-
-(define smaller-sample-graph '(
-    (0 0 0 1)
-    (0 0 0 0)
-    (0 0 0 0)
-    (1 0 0 0)))
----
-
 @ABC Example
 
 ![ABC example](../diagrams/abc-example.jpg "ABC example")
 
 --- main.mk.scm +=
-(define abc-example-hypergraph '(
+(define abc-hypergraph '(
     (1 0 1 1 0 0 0 0 0)
     (0 1 0 0 1 1 0 0 0)
     (0 0 0 0 0 0 1 1 1)))
 
-(define abc-example-cbh '(
+(define abc-bicliques '(
     (l r o o o o o o o)
     (o o o o o l r o o)
     (o o o o l o r o o)
     (o o o o l l r o o)
     (o o o l o o r o o)
     (o o o l o l r o o)
-    ;; (o o o l l o r o o) ;; This edge seems to add 8s to the search
+    (o o o l l o r o o)
+    (o o o l l l r o o)
+    (o o l o o o r o o)
+    (o o l o o l r o o)
+    (o o l o l o r o o)
+    (o o l o l l r o o)
+    (o o l l o o r o o)
+    (o o l l o l r o o)
+    (o o l l l o r o o)
     (o o l l l l r o o)))
 ---
 
@@ -317,82 +296,6 @@ The simplest example, the base case $K_4$.
     
 (define k4-example-cbh '(
     (l o o r)))
----
-
-Testing filter-cbso
-
---- main.mk.scm +=
-(define example-cbs
-    '(l l l l l l l l l l l l l l o o o))
-
-(define example-filter '(
- (o o o o o o o o o o o o r o o o l)
- (o o o o o o o o o o o l o o o o l)
- (o o o o o o o o o o o r o o o o l)
- (o o o o o o o o o o l o o o o o l)
- (o o o o o o o o o o r o o o o o l)
- (o o o o o o o o o l o o o o o o l)
- (o o o o o o o o o r o o o o o o l)
- (o o o o o o o o l o o o o o o o l)
- (o o o o o o o o r o o o o o o o l)
- (o o o o o o o l o o o o o o o o l)
- (o o o o o o o r o o o o o o o o l)
- (o o o o o o l o o o o o o o o o l)
- (o o o o o o r o o o o o o o o o l)
- (o o o o o l o o o o o o o o o o l)
- (o o o o o r o o o o o o o o o o l)
- (o o o o l o o o o o o o o o o o l)
- (o o o o r o o o o o o o o o o o l)
- (o o o l o o o o o o o o o o o o l)
- (o o o r o o o o o o o o o o o o l)
- (o o l o o o o o o o o o o o o o l)
- (o o r o o o o o o o o o o o o o l)
- (o l o o o o o o o o o o o o o o l)
- (o r o o o o o o o o o o o o o o l)
- (l o o o o o o o o o o o o o o o l)
- (r o o o o o o o o o o o o o o o l)
- (o o o o o o o o o o o o o o r o r)
- (o o o o o o o o o o o o o o l l o)
- (o o o o o o o o o o o o o l o o r)
- (o o o o o o o o o o o o o o r l o)
- (o o o o o o o o o o o o o r o o r)
- (o o o o o o o o o o o o l o o o r)
- (o o o o o o o o o o o o r o o o r)
- (o o o o o o o o o o o l o o o o r)
- (o o o o o o o o o o o r o o o o r)
- (o o o o o o o o o o l o o o o o r)
- (o o o o o o o o o o r o o o o o r)
- (o o o o o o o o o l o o o o o o r)
- (o o o o o o o o o r o o o o o o r)
- (o o o o o o o o l o o o o o o o r)
- (o o o o o o o o r o o o o o o o r)
- (o o o o o o o l o o o o o o o o r)
- (o o o o o o o r o o o o o o o o r)
- (o o o o o o l o o o o o o o o o r)
- (o o o o o o r o o o o o o o o o r)
- (o o o o o l o o o o o o o o o o r)
- (o o o o o r o o o o o o o o o o r)
- (o o o o l o o o o o o o o o o o r)
- (o o o o r o o o o o o o o o o o r)
- (o o o l o o o o o o o o o o o o r)
- (o o o r o o o o o o o o o o o o r)
- (o o l o o o o o o o o o o o o o r)
- (o o r o o o o o o o o o o o o o r)
- (o l o o o o o o o o o o o o o o r)
- (o r o o o o o o o o o o o o o o r)
- (l o o o o o o o o o o o o o o o r)))
-
-    
-(define is-cbs (lambda (l)
-    (conde
-        ((== l '()))
-        ((fresh (car-l cdr-l)
-            (== l `(,car-l . ,cdr-l))
-            (conde
-                ((== car-l 'o))
-                ((== car-l 'l))
-                ((== car-l 'r)))
-            (is-cbs cdr-l))))))
 ---
 
 @s Appendix A: The Riffle Relation
@@ -508,11 +411,11 @@ size([1|Xs], s(N)) :- size(Xs, N).
 
 
 filter_cbs(_, [], []).
-filter_cbs(X, [L|Ls], [L|Os]) :-
-    overlaps(X, L, f),
-    filter_cbs(X, Ls, Os).
 filter_cbs(X, [L|Ls], Os) :-
-    overlaps(X, L, t),
+    does_overlap(X, L),
+    filter_cbs(X, Ls, Os).
+filter_cbs(X, [L|Ls], [L|Os]) :-
+    no_overlap(X, L),
     filter_cbs(X, Ls, Os).
 
 overlaps([], [], f).
@@ -526,6 +429,21 @@ overlaps([o|Xs], [_|Ys], B) :-
 
 overlaps([_|Xs], [o|Ys], B) :-
     overlaps(Xs, Ys, B).
+
+
+does_overlap([l|_], [l|_]).
+does_overlap([l|_], [r|_]).
+does_overlap([r|_], [l|_]).
+does_overlap([r|_], [r|_]).
+does_overlap([_|X], [_|Y]) :- does_overlap(X, Y).
+
+no_overlap([], []).
+no_overlap[[o|X], [o|Y]) :- no_overlap(X, Y).
+no_overlap([o|X], [l|Y]) :- no_overlap(X, Y).
+no_overlap([o|X], [r|Y]) :- no_overlap(X, Y).
+no_overlap([l|X], [o|Y]) :- no_overlap(X, Y).
+no_overlap([r|X], [o|Y]) :- no_overlap(X, Y).
+
 
 k4_hypergraph([
 	[1, 1, 1, 0],
@@ -546,10 +464,124 @@ abc_cbs([
     [o, o, o, o, l, l, r, o, o],
     [o, o, o, l, o, o, r, o, o],
     [o, o, o, l, o, l, r, o, o],
-    [o, o, o, l, l, o, r, o, o],
+    % [o, o, o, l, l, o, r, o, o],
     [o, o, l, l, l, l, r, o, o]]).
+    
+abc_proof(Proof) :- 
+    abc_hypergraph(X),
+    abc_cbs(Y),
+    proves(X, Y, Proof).
+    
+my_filter(X) :-
+    filter_cbs([o, o, o, l, r], [
+        [l, o, o, o, l],
+        [l, o, o, o, r],
+        [l, r, o, o, o]
+    ], F).
 ---
 
+
+@s A translation of proveso into ramo for Javascript
+
+--- main.ramo.js
+import  { run, Rel, conde, exist, eq, conso, nilo } from 'https://esm.sh/ramo';
+
+const appendo = Rel((xs, ys, zs) => conde(
+  [nilo(xs), eq(ys, zs)],
+  exist((a, d, res) => [
+    conso(a, d, xs),
+    conso(a, res, zs),
+    appendo(d, ys, res)
+  ])
+));
+
+const roleo = Rel((role, el, er, biclique, eo) => [
+    exist((x) => [
+        eq(x, [role, el, er, biclique, eo]),
+        conde(
+            eq(x, ['a', 1, 0, 'l', 0]),
+            eq(x, ['b', 0, 1, 'r', 0]),
+            eq(x, ['u', 1, 0, 'o', 1]),
+            eq(x, ['v', 0, 1, 'o', 1]),
+            eq(x, ['w', 1, 1, 'o', 1]),
+            eq(x, ['o', 0, 0, 'o', 0]))])])
+
+
+const allRoleso = Rel((a, b, c, d, e) =>
+    conde(
+        eq([a, b, c, d, e], [[], [], [], [], []]),
+        exist((carA, cdrA, carB, cdrB, carC, cdrC, carD, cdrD, carE, cdrE) => [
+            conso(carA, cdrA, a),
+            conso(carB, cdrB, b),
+            conso(carC, cdrC, c),
+            conso(carD, cdrD, d),
+            conso(carE, cdrE, e),
+            roleo(carA, carB, carC, carD, carE),
+            allRoleso(cdrA, cdrB, cdrC, cdrD, cdrE)])))
+            
+const proveso = Rel((hypergraph, bicliques, steps) =>
+    conde(
+        [nilo(steps), anyLessThan3o(hypergraph)],
+        exist((step, restSteps, e1 e2 el er eo restHyperedges, biclique, restBicliques, filteredBicliques newHypergraph) => [
+            conso(step, restSteps, steps),
+
+            // Pick two hyperedges
+            riffleo([e1, e2], rest-hyperedges, hypergraph),
+            
+            // Order matters since one will be considered "left" and the other "right"
+            riffleo([el], [er], [e1, e2]),
+            
+            // Pick one biclique
+            riffleo([biclique], restBicliques, bicliques),
+            
+            // These hyperedges must be connected
+            allRoleso(step, el, er, biclique, eo),
+
+            filterBicliqueso(biclique, restBicliques, filteredBicliques),
+            
+            // Recur on the rest of the steps with the new hypergraph
+            conso(eo, restHyperedges, newHypergraph)
+            proveso(newHypergarph, filteredBicliques, restSteps)])))
+
+const lessThan3o = Rel((hyperedge) =>
+    exist((n) => [
+        conde(
+            eq(n, ['z']),
+            eq(n, ['s', 'z']),
+            eq(n, ['s', 's', 'z'])),
+            
+        sizeo(hyperedge, n)]))
+            
+const anyLessThan3o = Rel((hypergraph) =>
+    exist((hyperedge restHyperedges) => [
+        conso(hyperedge, restHyperedges, hypergraph),
+        conde(
+            lessThan3o(hyperedge),
+            anyLessThan3o(restHyperedges))]))
+
+const sizeo = Rel((hyperedge, size) =>
+    conde(
+        [nilo(hyperedge), eq(sizeo, ['z'])],
+        exist((first, rest, sizeRec) => [
+            conso(first, rest, hyperedge),
+            
+            
+const filterBicliques = Rel((x, l, o) =>
+    conde(
+        [nilo(l), nilo(o)],
+        fresh((carL, cdrL, oRest) => [
+            conso(carL, cdrL, l),
+            conde(
+                [conso(carL, oRest, o),
+                    allDisjointo(x, carL)],
+                [eq(o, oRest),
+                    anyOverlapo(x, carL)]),
+            filterBicliques(x, cdrL, oRest)])))
+            
+console.log(run()(q => exist((a, b, c, d, e) => [eq(q, [a, b, c, d, e]), roleo(a, b, c, d, e)])))
+
+
+---
 
 @s Non-3-colorability and odd cycles
 Proving a graph $G$ is not 3-colorable involves operations on the odd cycles contained in the graph. Therefore it would be useful to collect a set of sets of vertices, where the outer set contains the inner set if and only if there is an odd cycle in $G$ containing exactly those vertices in the inner set.

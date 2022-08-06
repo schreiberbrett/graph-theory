@@ -16,7 +16,7 @@ proof_step([Step|Steps],
            [Hright|Hrights],
            [C|Cbs],
            [Hout|Houts]) :-
-    is_proof_step(Step, Hleft, Hright, C, Hout),
+    is_proof_step(Hleft, Hright, Hout, C, Step),
     proof_step(Steps, Hlefts, Hrights, Cbs, Houts).
 
 is_proof_step(0, 0, 0, o, o).
@@ -50,11 +50,11 @@ size([1|Xs], s(N)) :- size(Xs, N).
 
 
 filter_cbs(_, [], []).
-filter_cbs(X, [L|Ls], [L|Os]) :-
-    overlaps(X, L, f),
-    filter_cbs(X, Ls, Os).
 filter_cbs(X, [L|Ls], Os) :-
-    overlaps(X, L, t),
+    does_overlap(X, L),
+    filter_cbs(X, Ls, Os).
+filter_cbs(X, [L|Ls], [L|Os]) :-
+    no_overlap(X, L),
     filter_cbs(X, Ls, Os).
 
 overlaps([], [], f).
@@ -63,16 +63,58 @@ overlaps([l|_], [r|_], t).
 overlaps([r|_], [l|_], t).
 overlaps([r|_], [r|_], t).
 
-overlaps([o|Xs], [Y|Ys], B) :-
+overlaps([o|Xs], [_|Ys], B) :-
     overlaps(Xs, Ys, B).
 
-overlaps([X|Xs], [o|Ys], B) :-
+overlaps([_|Xs], [o|Ys], B) :-
     overlaps(Xs, Ys, B).
+
+
+does_overlap([l|_], [l|_]).
+does_overlap([l|_], [r|_]).
+does_overlap([r|_], [l|_]).
+does_overlap([r|_], [r|_]).
+does_overlap([_|X], [_|Y]) :- does_overlap(X, Y).
+
+no_overlap([], []).
+no_overlap[[o|X], [o|Y]) :- no_overlap(X, Y).
+no_overlap([o|X], [l|Y]) :- no_overlap(X, Y).
+no_overlap([o|X], [r|Y]) :- no_overlap(X, Y).
+no_overlap([l|X], [o|Y]) :- no_overlap(X, Y).
+no_overlap([r|X], [o|Y]) :- no_overlap(X, Y).
+
 
 k4_hypergraph([
 	[1, 1, 1, 0],
-	[0, 1, 1, 0]]).
+	[0, 1, 1, 1]]).
 
 k4_cbs([
 	[l, o, o, r]]).
+
+abc_hypergraph([
+	[1, 0, 1, 1, 0, 0, 0, 0, 0],
+    [0, 1, 0, 0, 1, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 1, 1]]).
+
+abc_cbs([
+    [l, r, o, o, o, o, o, o, o],
+    [o, o, o, o, o, l, r, o, o],
+    [o, o, o, o, l, o, r, o, o],
+    [o, o, o, o, l, l, r, o, o],
+    [o, o, o, l, o, o, r, o, o],
+    [o, o, o, l, o, l, r, o, o],
+    % [o, o, o, l, l, o, r, o, o],
+    [o, o, l, l, l, l, r, o, o]]).
+    
+abc_proof(Proof) :- 
+    abc_hypergraph(X),
+    abc_cbs(Y),
+    proves(X, Y, Proof).
+    
+my_filter(X) :-
+    filter_cbs([o, o, o, l, r], [
+        [l, o, o, o, l],
+        [l, o, o, o, r],
+        [l, r, o, o, o]
+    ], F).
 

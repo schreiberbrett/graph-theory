@@ -100,9 +100,9 @@ function helloWorld() {
 <pre class="prettyprint">
 (load "~/miniKanren/mk.scm")
 
-<span class="nocode pln">{The riffle relation, <a href="main.html#1:10">10</a>}</span>
+<span class="nocode pln">{The riffle relation, <a href="main.html#1:9">9</a>}</span>
 </pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:10">10</a></p>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:8">8</a>, <a href="main.html#1:8">8</a> and <a href="main.html#1:9">9</a></p>
 
 
 </div>
@@ -122,74 +122,74 @@ function helloWorld() {
 <li>h3 is the union of the vertices in h1 and h2 that are not in the cbs
 </li>
 </ul>
-<p>Consider 6 disjoint sets:
-</p>
-<p>TODO: Replace the 1 and 2s in the below definition with ls and rs.
-In fact, we may not even need this symbol convention since it is entirely covered
+<p>Consider 6 disjoint roles that a vertex could be in:
 </p>
 <table>
     <tr>
-        <th>Name</th><th>Stands for</th><th>Description</th>
+        <th>Role name</th>
+        <th>Included in <span class="math">e_l</span>?</th>
+        <th>Included in <span class="math">e_r</span>?</th>
+        <th>Role within the complete bipartite subgraph</th>
+        <th>Included in <span class="math">e_o</span>?</th>
     </tr>
     <tr>
-        <td><span class="math">r_1</span></td>
-        <td>Rivals 1</td>
-        <td>The partition of the CBS contained in <span class="math">h_1</span> </td>
+        <td><span class="math">a</span></td><td>1</td><td>0</td><td><span class="math">L</span></td><td>0</td>
     </tr>
     <tr>
-        <td><span class="math">r_2</span></td>
-        <td>Rivals 2</td>
-        <td>The partition of the CBS contained in <span class="math">h_2</span> </td>
+        <td><span class="math">b</span></td><td>0</td><td>1</td><td><span class="math">R</span></td><td>0</td>
     </tr>
     <tr>
-        <td><span class="math">b_1</span></td>
-        <td>Bystanders 1</td>
-        <td>The vertices contained in <span class="math">h_1</span> but not <span class="math">h_2</span>, and not in the CBS.</td>
+        <td><span class="math">u</span></td><td>1</td><td>0</td><td><span class="math">N</span></td><td>1</td>
     </tr>
     <tr>
-        <td><span class="math">b_2</span></td>
-        <td>Bystanders 2</td>
-        <td>The vertices contained in <span class="math">h_2</span> but not <span class="math">h_1</span>, and not in the CBS.</td>
+        <td><span class="math">v</span></td><td>0</td><td>1</td><td><span class="math">N</span></td><td>1</td>
     </tr>
     <tr>
-        <td><span class="math">b</span></td>
-        <td>Bystanders (both)</td>
-        <td>The vertices contained in both <span class="math">h_1</span> and <span class="math">h_2</span>, but not in the CBS.</td>
+        <td><span class="math">w</span></td><td>1</td><td>1</td><td><span class="math">N</span></td><td>1</td>
     </tr>
     <tr>
-        <td><span class="math">o</span></td>
-        <td>Outsiders</td>
-        <td>The vertices not contained in either <span class="math">h_1</span> or <span class="math">h_2</span>.</td>
+        <td><span class="math">o</span></td><td>0</td><td>0</td><td><span class="math">N</span></td><td>0</td>
     </tr>
 </table>
-<p><img src="../diagrams/h1-h2-relationship.jpg" alt="test" title="The relationship between h1 and h2">
+<p>Below is an example with six vertices, one in each role and labelled by its role. The left includes the hyperedges <span class="math">e_l</span> and <span class="math">e_r</span>, the right includes the hyperedge <span class="math">e_o</span>.
 </p>
-<p>The above definition, in a relationship with <span class="math">h_1</span> and <span class="math">h_2</span>. This is how proof steps are encoded.
+<p><img src="../diagrams/the-six-roles.jpg" alt="the six roles" title="The six different roles, visualized">
+</p>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
+<pre class="prettyprint">
+(define roleo (lambda (role el er biclique eo)
+    (fresh (x)
+        (== x `(,role ,el ,er ,biclique ,eo))
+        (conde
+            ((== x '(a 1 0 l 0)))
+            ((== x '(b 0 1 r 0)))
+            ((== x '(u 1 0 o 1)))
+            ((== x '(v 0 1 o 1)))
+            ((== x '(w 1 1 o 1)))
+            ((== x '(o 0 0 o 0)))))))
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:8">8</a>, <a href="main.html#1:8">8</a> and <a href="main.html#1:9">9</a></p>
+
+
+</div>
+<p>Later, we may want to allow choosing to <em>not</em> use an edge in the provided CBS. This would give us flexibility to pass in just the maximal CBSes, rather than all <span class="math">2^n</span> combinations of each CBS.
 </p>
 
 <div class="codeblock">
 <span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
 <pre class="prettyprint">
 
-(define proof-stepo (lambda (step h-l h-r cbs h-out)
+(define all-roleso (lambda (a b c d e)
     (conde
-        ((== step '()) (== h-l '()) (== h-r '()) (== cbs '()) (== h-out '()))
-        ((fresh (car-h-l cdr-h-l car-h-r cdr-h-r car-h-out cdr-h-out car-step cdr-step car-cbs cdr-cbs)
-            (== step `(,car-step . ,cdr-step))
-            (== h-l `(,car-h-l . ,cdr-h-l))
-            (== h-r `(,car-h-r . ,cdr-h-r))
-            (== cbs `(,car-cbs . ,cdr-cbs))
-            (== h-out `(,car-h-out . ,cdr-h-out))
-            (conde
-                ((== car-h-l 0) (== car-h-r 0) (== car-h-out 0) (== car-cbs 'o) (== car-step 'o))
-                ((== car-h-l 1) (== car-h-r 0) (== car-h-out 0) (== car-cbs 'l) (== car-step 'r1))
-                ((== car-h-l 1) (== car-h-r 0) (== car-h-out 1) (== car-cbs 'o) (== car-step 'b1))
-                ((== car-h-l 0) (== car-h-r 1) (== car-h-out 0) (== car-cbs 'r) (== car-step 'r2))
-                ((== car-h-l 0) (== car-h-r 1) (== car-h-out 1) (== car-cbs 'o) (== car-step 'b2))
-                ((== car-h-l 1) (== car-h-r 1) (== car-h-out 1) (== car-cbs 'o) (== car-step 'b)))
-            (proof-stepo cdr-step cdr-h-l cdr-h-r cdr-cbs cdr-h-out))))))
+        ((== `(,a ,b ,c ,d ,e) '(() () () () ())))
+        ((fresh (car-a cdr-a car-b cdr-b car-c cdr-c car-d cdr-d car-e cdr-e)
+            (== `(,a ,b ,c ,d ,e) `((,car-a . ,cdr-a) (,car-b . ,cdr-b) (,car-c . ,cdr-c) (,car-d . ,cdr-d) (,car-e . ,cdr-e)))
+            (roleo car-a car-b car-c car-d car-e)
+            (all-roleso cdr-a cdr-b cdr-c cdr-d cdr-e))))))
 </pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:10">10</a></p>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:8">8</a>, <a href="main.html#1:8">8</a> and <a href="main.html#1:9">9</a></p>
 
 
 </div>
@@ -199,27 +199,27 @@ In fact, we may not even need this symbol convention since it is entirely covere
 <div class="codeblock">
 <span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
 <pre class="prettyprint">
-(define proveso (lambda (h cbs steps)
+(define proveso (lambda (hypergraph bicliques steps)
     (conde
-        ((== steps '()) (any-less-than-3o h))
-        ((fresh (step rest-steps h1 h2 h-l h-r h-out h-rest c rest-cbs new-cbs)
+        ((== steps '()) (any-less-than-3o hypergraph))
+        ((fresh (step rest-steps e1 e2 el er eo rest-hyperedges biclique rest-bicliques filtered-bicliques)
             (== steps `(,step . ,rest-steps))
             ;; Pick two hyperedges
-            (riffleo `(,h1 ,h2) h-rest h)
+            (riffleo `(,e1 ,e2) rest-hyperedges hypergraph)
             
             ;; Order matters since one will be considered "left" and the other "right"
-            (riffleo `(,h-l) `(,h-r) `(,h1 ,h2))
+            (riffleo `(,el) `(,er) `(,e1 ,e2))
             
             ;; Pick one cbs
-            (riffleo `(,c) rest-cbs cbs)
+            (riffleo `(,biclique) rest-bicliques bicliques)
 
             ;; These hyperedges must be connected
-            (proof-stepo step h-l h-r c h-out)
+            (all-roleso step el er biclique eo)
             
-            (filter-cbso c rest-cbs new-cbs)
+            (filter-bicliqueso biclique rest-bicliques filtered-bicliques)
             
             ;; Recur on the rest of the steps with the newly-made h-out
-            (proveso `(,h-out . ,h-rest) new-cbs rest-steps))))))
+            (proveso `(,eo . ,rest-hyperedges) filtered-bicliques rest-steps))))))
 
 (define any-less-than-3o (lambda (h)
     (fresh (car-h cdr-h)
@@ -239,7 +239,7 @@ In fact, we may not even need this symbol convention since it is entirely covere
      
 <span class="nocode pln">{Sizeo, <a href="main.html#1:8">8</a>}</span>
 </pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:10">10</a></p>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:8">8</a>, <a href="main.html#1:8">8</a> and <a href="main.html#1:9">9</a></p>
 
 
 </div>
@@ -247,14 +247,14 @@ In fact, we may not even need this symbol convention since it is entirely covere
 <a name="1:6"><div class="section"><h4>6. Definition of a complete bipartite subgraph</h4></a>
 <p>A complete bipartite subgraph in a graph with <span class="math">n</span> vertices can be represented as a list of length <span class="math">n</span>, where each element is one of the following.
 </p>
-<p><span class="math">l</span>
+<p><span class="math">L</span>
 : Belongs to the <strong>left</strong> side of the complete bipartite subgraph.
 </p>
-<p><span class="math">r</span>
+<p><span class="math">R</span>
 : Belongs to the <strong>right</strong> side of the complete bipartite subgraph.
 </p>
-<p><span class="math">o</span>
-: Not included in the complete bipartite subgraph.
+<p><span class="math">N</span>
+: Neither. Not included in the complete bipartite subgraph.
 </p>
 
 </div>
@@ -263,46 +263,60 @@ In fact, we may not even need this symbol convention since it is entirely covere
 <div class="codeblock">
 <span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
 <pre class="prettyprint">
-(define ex-a '(l o r o l))
-(define ex-l '(
-    (l o o r o)
-    (r o l o o)
-    (o l o r o)
-    (o r r l o)))
-
-(define filter-cbso (lambda (x l o)
+(define filter-bicliqueso (lambda (x l o)
     (conde
         ((== l '()) (== o '()))
-        ((fresh (car-l cdr-l should-discard o-rest)
+        ((fresh (car-l cdr-l o-rest)
             (== l `(,car-l . ,cdr-l))
             (conde
-                ((== should-discard #f) (== o `(,car-l . ,o-rest)))
-                ((== should-discard #t) (== o o-rest)))
-            (overlapso x car-l should-discard)
-            (filter-cbso x cdr-l o-rest))))))
+                ((== o `(,car-l . ,o-rest))
+                    (all-disjointo x car-l))
+                ((== o o-rest)
+                    (any-overlapo x car-l)))
+            (filter-bicliqueso x cdr-l o-rest))))))
 
-(define overlapso (lambda (x y result)
+(define overlapo (lambda (u v)
+    (fresh (x)
+        (== x `(,u ,v))
+        (conde
+            ((== x '(l l)))
+            ((== x '(l r)))
+            ((== x '(r l)))
+            ((== x '(r r)))))))
+
+(define any-overlapo (lambda (x y)
+    (fresh (car-x cdr-x car-y cdr-y)
+        (== x `(,car-x . ,cdr-x))
+        (== y `(,car-y . ,cdr-y))
+        (conde
+            ((overlapo car-x car-y))
+            ((any-overlapo cdr-x cdr-y))))))
+
+(define disjoint2o (lambda (u v)
     (conde
-        ((== x '()) (== y '()) (== result #f))
+        ((== u 'o))
+        ((== v 'o)))))
+
+(define disjointo (lambda (u v)
+    (fresh (x)
+        (== x `(,u ,v))
+        (conde
+            ((== x '(l o)))
+            ((== x '(r o)))
+            ((== x '(o o)))
+            ((== x '(o r)))
+            ((== x '(o l)))))))
+        
+(define all-disjointo (lambda (x y)
+    (conde
+        ((== x '()) (== y '()))
         ((fresh (car-x cdr-x car-y cdr-y)
             (== x `(,car-x . ,cdr-x))
             (== y `(,car-y . ,cdr-y))
-            (conde
-                (
-                    (== result #t)
-                    (conde
-                        ((== car-x 'l) (== car-y 'l))
-                        ((== car-x 'r) (== car-y 'l))
-                        ((== car-x 'l) (== car-y 'r))
-                        ((== car-x 'r) (== car-y 'r))))
-                (
-                    (conde
-                        ((== car-x 'o))
-                        ((== car-y 'o)))
-                        
-                    (overlapso cdr-x cdr-y result))))))))
+            (disjointo car-x car-y)
+            (all-disjointo cdr-x cdr-y))))))
 </pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:10">10</a></p>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:8">8</a>, <a href="main.html#1:8">8</a> and <a href="main.html#1:9">9</a></p>
 
 
 </div>
@@ -345,56 +359,6 @@ In fact, we may not even need this symbol convention since it is entirely covere
 
 <p class="seealso">Used in section <a href="main.html#1:5">5</a></p>
 </div>
-</div>
-<a name="1:9"><div class="section"><h4>9. Sample graph-hypergraphs to test on</h4></a>
-<p><img src="../diagrams/sample-graph-and-hypergraph.jpg" alt="Sample graph and hypergraph" title="A sample graph and hypergraph">
-</p>
-
-<div class="codeblock">
-<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
-<pre class="prettyprint">
-(define sample-hypergraph '(
-    (1 1 1 0 0 0 0 0 0)
-    (0 0 0 1 1 1 0 0 0)
-    (0 0 0 0 0 0 1 1 1)))
-    
-(define sample-graph '(
-    (0 0 0 1 0 0 0 0 0)
-    (0 0 0 0 0 0 1 0 0)
-    (0 0 0 0 0 0 1 0 0)
-    (1 0 0 0 0 0 0 0 0)
-    (0 0 0 0 0 0 1 0 0)
-    (0 0 0 0 0 0 1 0 0)
-    (0 1 1 0 1 1 0 0 0)
-    (0 0 0 0 0 0 0 0 0)
-    (0 0 0 0 0 0 0 0 0)))
-</pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:10">10</a></p>
-
-
-</div>
-<p>I had to draw this smaller hypergraph because the above was taking longer than 5 minutes. I just want to see if <span class="math">proves^o</span> even works.
-</p>
-<p><img src="../diagrams/smaller-sample-graph-and-hypergraph.jpg" alt="Smaller sample graph and hypergraph" title="A smaller sample graph and hypergraph">
-</p>
-
-<div class="codeblock">
-<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
-<pre class="prettyprint">
-(define smaller-sample-hypergraph '(
-    (1 1 1 0)
-    (0 1 1 1)))
-
-(define smaller-sample-graph '(
-    (0 0 0 1)
-    (0 0 0 0)
-    (0 0 0 0)
-    (1 0 0 0)))
-</pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:10">10</a></p>
-
-
-</div>
 <p>@ABC Example
 </p>
 <p><img src="../diagrams/abc-example.jpg" alt="ABC example" title="ABC example">
@@ -403,22 +367,30 @@ In fact, we may not even need this symbol convention since it is entirely covere
 <div class="codeblock">
 <span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
 <pre class="prettyprint">
-(define abc-example-hypergraph '(
+(define abc-hypergraph '(
     (1 0 1 1 0 0 0 0 0)
     (0 1 0 0 1 1 0 0 0)
     (0 0 0 0 0 0 1 1 1)))
 
-(define abc-example-cbh '(
+(define abc-bicliques '(
     (l r o o o o o o o)
     (o o o o o l r o o)
     (o o o o l o r o o)
     (o o o o l l r o o)
     (o o o l o o r o o)
     (o o o l o l r o o)
-    ;; (o o o l l o r o o) ;; This edge seems to add 8s to the search
+    (o o o l l o r o o)
+    (o o o l l l r o o)
+    (o o l o o o r o o)
+    (o o l o o l r o o)
+    (o o l o l o r o o)
+    (o o l o l l r o o)
+    (o o l l o o r o o)
+    (o o l l o l r o o)
+    (o o l l l o r o o)
     (o o l l l l r o o)))
 </pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:10">10</a></p>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:8">8</a> and <a href="main.html#1:9">9</a></p>
 
 
 </div>
@@ -437,99 +409,17 @@ In fact, we may not even need this symbol convention since it is entirely covere
 (define k4-example-cbh '(
     (l o o r)))
 </pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:10">10</a></p>
-
-
-</div>
-<p>Testing filter-cbso
-</p>
-
-<div class="codeblock">
-<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
-<pre class="prettyprint">
-(define example-cbs
-    '(l l l l l l l l l l l l l l o o o))
-
-(define example-filter '(
- (o o o o o o o o o o o o r o o o l)
- (o o o o o o o o o o o l o o o o l)
- (o o o o o o o o o o o r o o o o l)
- (o o o o o o o o o o l o o o o o l)
- (o o o o o o o o o o r o o o o o l)
- (o o o o o o o o o l o o o o o o l)
- (o o o o o o o o o r o o o o o o l)
- (o o o o o o o o l o o o o o o o l)
- (o o o o o o o o r o o o o o o o l)
- (o o o o o o o l o o o o o o o o l)
- (o o o o o o o r o o o o o o o o l)
- (o o o o o o l o o o o o o o o o l)
- (o o o o o o r o o o o o o o o o l)
- (o o o o o l o o o o o o o o o o l)
- (o o o o o r o o o o o o o o o o l)
- (o o o o l o o o o o o o o o o o l)
- (o o o o r o o o o o o o o o o o l)
- (o o o l o o o o o o o o o o o o l)
- (o o o r o o o o o o o o o o o o l)
- (o o l o o o o o o o o o o o o o l)
- (o o r o o o o o o o o o o o o o l)
- (o l o o o o o o o o o o o o o o l)
- (o r o o o o o o o o o o o o o o l)
- (l o o o o o o o o o o o o o o o l)
- (r o o o o o o o o o o o o o o o l)
- (o o o o o o o o o o o o o o r o r)
- (o o o o o o o o o o o o o o l l o)
- (o o o o o o o o o o o o o l o o r)
- (o o o o o o o o o o o o o o r l o)
- (o o o o o o o o o o o o o r o o r)
- (o o o o o o o o o o o o l o o o r)
- (o o o o o o o o o o o o r o o o r)
- (o o o o o o o o o o o l o o o o r)
- (o o o o o o o o o o o r o o o o r)
- (o o o o o o o o o o l o o o o o r)
- (o o o o o o o o o o r o o o o o r)
- (o o o o o o o o o l o o o o o o r)
- (o o o o o o o o o r o o o o o o r)
- (o o o o o o o o l o o o o o o o r)
- (o o o o o o o o r o o o o o o o r)
- (o o o o o o o l o o o o o o o o r)
- (o o o o o o o r o o o o o o o o r)
- (o o o o o o l o o o o o o o o o r)
- (o o o o o o r o o o o o o o o o r)
- (o o o o o l o o o o o o o o o o r)
- (o o o o o r o o o o o o o o o o r)
- (o o o o l o o o o o o o o o o o r)
- (o o o o r o o o o o o o o o o o r)
- (o o o l o o o o o o o o o o o o r)
- (o o o r o o o o o o o o o o o o r)
- (o o l o o o o o o o o o o o o o r)
- (o o r o o o o o o o o o o o o o r)
- (o l o o o o o o o o o o o o o o r)
- (o r o o o o o o o o o o o o o o r)
- (l o o o o o o o o o o o o o o o r)))
-
-    
-(define is-cbs (lambda (l)
-    (conde
-        ((== l '()))
-        ((fresh (car-l cdr-l)
-            (== l `(,car-l . ,cdr-l))
-            (conde
-                ((== car-l 'o))
-                ((== car-l 'l))
-                ((== car-l 'r)))
-            (is-cbs cdr-l))))))
-</pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:10">10</a></p>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:8">8</a> and <a href="main.html#1:9">9</a></p>
 
 
 </div>
 </div>
-<a name="1:10"><div class="section"><h4>10. Appendix A: The Riffle Relation</h4></a>
+<a name="1:9"><div class="section"><h4>9. Appendix A: The Riffle Relation</h4></a>
 <p>Adapted from <a href="https://github.com/schreiberbrett/cool-relations/blob/main/the-riffle-relation.md">here</a>.
 </p>
 
 <div class="codeblock">
-<span class="codeblock_name">{The riffle relation <a href="main.html#1:10">10</a>}</span>
+<span class="codeblock_name">{The riffle relation <a href="main.html#1:9">9</a>}</span>
 <pre class="prettyprint">
 (define riffleo (lambda (a b o)
     (fresh (car-a cdr-a car-b cdr-b car-o cdr-o z0 z1)
@@ -569,15 +459,15 @@ In fact, we may not even need this symbol convention since it is entirely covere
             (== b `(,z . ,w))
             (same-lengtho y w))))))
 </pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:9">9</a> and <a href="main.html#1:9">9</a></p>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:8">8</a> and <a href="main.html#1:8">8</a></p>
 
 
 </div>
 </div>
-<a name="1:11"><div class="section"><h4>11. Appendix B: immutable LinkedList implementation with constant-time, linkedList.Remove2Add1()</h4></a>
+<a name="1:10"><div class="section"><h4>10. Appendix B: immutable LinkedList implementation with constant-time, linkedList.Remove2Add1()</h4></a>
 
 <div class="codeblock">
-<span class="codeblock_name">{<strong>Remove2Add1Test.java</strong> <a href="main.html#1:11">11</a>}</span>
+<span class="codeblock_name">{<strong>Remove2Add1Test.java</strong> <a href="main.html#1:10">10</a>}</span>
 <pre class="prettyprint">
 public class Remove2Add1Test {
     public static void Main(String[] args) {
@@ -598,10 +488,12 @@ public class Remove2Add1Test {
 
 </div>
 </div>
-<a name="1:12"><div class="section"><h4>12. Appendix C: A translation of "proves" into Prolog</h4></a>
+<a name="1:11"><div class="section"><h4>11. Appendix C: A translation of "proves" into Prolog</h4></a>
+<p>Hopefully this makes benchmarking easier. I don't know why filter_cbs is taking so long.
+</p>
 
 <div class="codeblock">
-<span class="codeblock_name">{<strong>main.pl</strong> <a href="main.html#1:12">12</a>}</span>
+<span class="codeblock_name">{<strong>main.pl</strong> <a href="main.html#1:11">11</a>}</span>
 <pre class="prettyprint">
 riffle([], [], []).
 riffle([A|As], [], [A|As]).
@@ -621,7 +513,7 @@ proof_step([Step|Steps],
            [Hright|Hrights],
            [C|Cbs],
            [Hout|Houts]) :-
-    is_proof_step(Step, Hleft, Hright, C, Hout),
+    is_proof_step(Hleft, Hright, Hout, C, Step),
     proof_step(Steps, Hlefts, Hrights, Cbs, Houts).
 
 is_proof_step(0, 0, 0, o, o).
@@ -655,11 +547,11 @@ size([1|Xs], s(N)) :- size(Xs, N).
 
 
 filter_cbs(_, [], []).
-filter_cbs(X, [L|Ls], [L|Os]) :-
-    overlaps(X, L, f),
-    filter_cbs(X, Ls, Os).
 filter_cbs(X, [L|Ls], Os) :-
-    overlaps(X, L, t),
+    does_overlap(X, L),
+    filter_cbs(X, Ls, Os).
+filter_cbs(X, [L|Ls], [L|Os]) :-
+    no_overlap(X, L),
     filter_cbs(X, Ls, Os).
 
 overlaps([], [], f).
@@ -668,18 +560,96 @@ overlaps([l|_], [r|_], t).
 overlaps([r|_], [l|_], t).
 overlaps([r|_], [r|_], t).
 
-overlaps([o|Xs], [Y|Ys], B) :-
+overlaps([o|Xs], [_|Ys], B) :-
     overlaps(Xs, Ys, B).
 
-overlaps([X|Xs], [o|Ys], B) :-
+overlaps([_|Xs], [o|Ys], B) :-
     overlaps(Xs, Ys, B).
+
+
+does_overlap([l|_], [l|_]).
+does_overlap([l|_], [r|_]).
+does_overlap([r|_], [l|_]).
+does_overlap([r|_], [r|_]).
+does_overlap([_|X], [_|Y]) :- does_overlap(X, Y).
+
+no_overlap([], []).
+no_overlap[[o|X], [o|Y]) :- no_overlap(X, Y).
+no_overlap([o|X], [l|Y]) :- no_overlap(X, Y).
+no_overlap([o|X], [r|Y]) :- no_overlap(X, Y).
+no_overlap([l|X], [o|Y]) :- no_overlap(X, Y).
+no_overlap([r|X], [o|Y]) :- no_overlap(X, Y).
+
 
 k4_hypergraph([
 	[1, 1, 1, 0],
-	[0, 1, 1, 0]]).
+	[0, 1, 1, 1]]).
 
 k4_cbs([
 	[l, o, o, r]]).
+
+abc_hypergraph([
+	[1, 0, 1, 1, 0, 0, 0, 0, 0],
+    [0, 1, 0, 0, 1, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 1, 1]]).
+
+abc_cbs([
+    [l, r, o, o, o, o, o, o, o],
+    [o, o, o, o, o, l, r, o, o],
+    [o, o, o, o, l, o, r, o, o],
+    [o, o, o, o, l, l, r, o, o],
+    [o, o, o, l, o, o, r, o, o],
+    [o, o, o, l, o, l, r, o, o],
+    % [o, o, o, l, l, o, r, o, o],
+    [o, o, l, l, l, l, r, o, o]]).
+    
+abc_proof(Proof) :- 
+    abc_hypergraph(X),
+    abc_cbs(Y),
+    proves(X, Y, Proof).
+    
+my_filter(X) :-
+    filter_cbs([o, o, o, l, r], [
+        [l, o, o, o, l],
+        [l, o, o, o, r],
+        [l, r, o, o, o]
+    ], F).
+</pre>
+
+
+
+</div>
+</div>
+<a name="1:12"><div class="section"><h4>12. A translation of proveso into ramo for Javascript</h4></a>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.ramo.js</strong> <a href="main.html#1:12">12</a>}</span>
+<pre class="prettyprint">
+import  { run, Rel, conde, exist, eq, conso, nilo } from 'https://esm.sh/ramo';
+
+const appendo = Rel((xs, ys, zs) =&gt; conde(
+  [nilo(xs), eq(ys, zs)],
+  exist((a, d, res) =&gt; [
+    conso(a, d, xs),
+    conso(a, res, zs),
+    appendo(d, ys, res)
+  ])
+));
+
+const roleo = Rel((role, el, er, biclique, eo) =&gt; [
+    exist((x) =&gt; [
+        eq(x, [role, el, er, biclique, eo]),
+        conde(
+            eq(x, ['a', 1, 0, 'l', 0]),
+            eq(x, ['b', 0, 1, 'r', 0]),
+            eq(x, ['u', 1, 0, 'o', 1]),
+            eq(x, ['v', 0, 1, 'o', 1]),
+            eq(x, ['w', 1, 1, 'o', 1]),
+            eq(x, ['o', 0, 0, 'o', 0]))])])
+            
+console.log(run()(q =&gt; exist((a, b, c, d, e) =&gt; [eq(q, [a, b, c, d, e]), roleo(a, b, c, d, e)])))
+
+
 </pre>
 
 
