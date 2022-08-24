@@ -45,6 +45,10 @@ A sequence of wars is unambiguous. But it leads to a combinatorial explosion. Th
 @{The riffle relation}
 ---
 
+--- main.pl
+% File declaration for any translations into Prolog
+---
+
 @s
 Now we must verify that there is indeed a conflict between $h_1$ and $h_2$. So we must go through $G$ to verify that it contains every edge $(u, v)$ (or $(v, u)$).
 
@@ -85,7 +89,7 @@ Consider 6 disjoint roles that a vertex could be in:
 
 Below is an example with six vertices, one in each role and labelled by its role. The left includes the hyperedges $e_l$ and $e_r$, the right includes the hyperedge $e_o$.
 
-![the six roles](../diagrams/the-six-roles.jpg "The six different roles, visualized")
+![the six roles](../diagrams/the-six-roles-formally.png "The six different roles, visualized")
 
 
 --- main.mk.scm +=
@@ -242,23 +246,170 @@ Since a hypergraph is a 0-1 matrix whose columns are vertices and whose rows are
             ((== hyperedge `(1 . ,rest)) (sizeo rest `(s . ,size)))))))
 ---
 
-Applying Will's law
+Applying **the correctness-preserving transformation**.
 
 --- Sizeo :=
 (define sizeo (lambda (hyperedge size)
-    (fresh (first rest size-rec)
-        (conde
-            ((== hyperedge '()) (== size 'z))
-            ((== hyperedge `(,first . ,rest))
-                (conde
-                    ((== first 0) (== size size-rec))
-                    ((== first 1) (== size `(s . ,size-rec))))
-                (sizeo rest size-rec))))))
+    (conde
+        ((== hyperedge '()) (== size '(z)))
+        ((fresh (first rest size-rec)
+            (== hyperedge `(,first . ,rest))
+            (conde
+                ((== first 0) (== size size-rec))
+                ((== first 1) (== size `(s . ,size-rec))))
+            (sizeo rest size-rec))))))
 ---
 
-@ABC Example
+@s Verifying the biclique is in the graph
 
-![ABC example](../diagrams/abc-example.jpg "ABC example")
+Assume the given graph is lexicographically ordered. So when it is riffled, the edges in the biclique are also lexicographically ordered.
+
+--- main.mk.scm +=
+
+
+(define all-has-botho (lambda (proof-string biclique-edges)
+    (conde
+        ((== biclique-edges '()))
+        ((fresh (car-l cdr-l)
+            (== biclique-edges `(,car-l . ,cdr-l))
+            (has-botho proof-string car-l)
+            (all-has-botho proof-string cdr-l))))))
+            
+(define has-botho (lambda (proof-string edge)
+    (fresh (x) ;; Needed for some reason to complete the conjunction
+        (has-lo proof-string edge)
+        (has-ro proof-string edge))))
+                
+(define has-lo (lambda (proof-string edge)
+    (fresh (car-proof-string cdr-proof-string car-edge cdr-edge)
+        (== proof-string `(,car-proof-string . ,cdr-proof-string))
+        (== edge `(,car-edge . ,cdr-edge))
+        (conde
+            ((== car-proof-string 'l) (== car-edge 1))
+            ((has-lo cdr-proof-string cdr-edge))))))
+
+(define has-ro (lambda (proof-string edge)
+    (fresh (car-proof-string cdr-proof-string car-edge cdr-edge)
+        (== proof-string `(,car-proof-string . ,cdr-proof-string))
+        (== edge `(,car-edge . ,cdr-edge))
+        (conde
+            ((== car-proof-string 'r) (== car-edge 1))
+            ((has-ro cdr-proof-string cdr-edge))))))
+
+
+(define all-pairso (lambda (l out)
+    (conde
+        ((fresh (a b)
+            (== l `(,a ,b)) (== out `((,a ,b)))))
+            
+        ((fresh (a b c)
+            (== l `(,a ,b ,c))
+            (== out `((,a ,b) (,a ,c) (,b ,c)))))
+        
+        ((fresh (a b c cdr-l out-rec my-pairs)
+            (== l `(,a ,b ,c . ,cdr-l))
+            (prefix-allo a `(,b ,c . ,cdr-l) my-pairs)
+            (appendo my-pairs out-rec out)
+            (all-pairso `(,b ,c . ,cdr-l) out-rec))))))
+
+(define graph-has-bicliqueso (lambda (proof-string graph)
+    (fresh (pairs filtered-pairs edges rest-graph)
+        (all-pairs-indexedo proof-string pairs)
+        (filter-is-lr-pairo pairs filtered-pairs)
+        (map-needed-edgeo filtered-pairs edges)
+        (riffleo edges rest-graph graph))))
+            
+(define filter-is-lr-pairo (lambda (l o)
+    (conde
+        ((== l '()) (== o '()))
+        ((fresh (car-l cdr-l cdr-o)
+            (== l `(,car-l . ,cdr-l))
+            
+            (conde
+                ((== o `(,car-l . ,cdr-o))
+                    (is-lr-pairo car-l))
+                ((== o cdr-o)
+                    (not-is-lr-pairo car-l)))
+            
+            (filter-is-lr-pairo cdr-l cdr-o))))))
+
+(define is-lr-pairo (lambda (indexed-pair)
+    (fresh (l1 x l2 y l3 z)
+        (== indexed-pair `(,l1 ,x ,l2 ,y ,l3))
+        (== z `(,x ,y))
+        (conde
+            ((== z '(l r)))
+            ((== z '(r l)))))))
+            
+(define not-is-lr-pairo (lambda (indexed-pair)
+    (fresh (l1 x l2 y l3 z)
+        (== indexed-pair `(,l1 ,x ,l2 ,y ,l3))
+        (== z `(,x ,y))
+        (conde
+            ((== x '(l l)))
+            ((== x '(o l)))
+            ((== z '(l o)))
+            ((== z '(o o)))
+            ((== z '(r o)))
+            ((== z '(o r)))
+            ((== z '(r r)))))))
+
+(define map-needed-edgeo (lambda (l o)
+    (conde
+        ((== l '()) (== o '()))
+        ((fresh (car-l cdr-l car-o cdr-o)
+            (== l `(,car-l . ,cdr-l))
+            (== o `(,car-o . ,cdr-o))
+            (needed-edgeo car-l car-o)
+            (map-needed-edgeo cdr-l cdr-o))))))
+
+
+(define needed-edgeo (lambda (indexed-pair edge)
+    (fresh (l1 x l2 y l3 l1-zeroes l2-zeroes l3-zeroes o1o o1o1o)
+        (== indexed-pair `(,l1 ,x ,l2 ,y ,l3))
+        (== o1o1o edge)
+        (map-zeroo l1 l1-zeroes)
+        (map-zeroo l2 l2-zeroes)
+        (map-zeroo l3 l3-zeroes)
+        (appendo l1-zeroes `(1 . ,l2-zeroes) o1o)
+        (appendo o1o `(1 . ,l3-zeroes) o1o1o))))
+        
+(define map-zeroo (lambda (l o)
+    (conde
+        ((== l '()) (== o '()))
+        ((fresh (car-l cdr-l car-o cdr-o)
+            (== l `(,car-l . ,cdr-l))
+            (== o `(,car-o . ,cdr-o))
+            (zeroo car-o)
+            (map-zeroo cdr-l cdr-o))))))
+
+(define zeroo (lambda (x)
+    (== x 0)))
+            
+(define prefixo (lambda (x l o)
+    (== o `(,x ,l))))
+
+(define prefix-allo (lambda (x l o)
+    (conde
+        ((==  l '()) (== o '()))
+        ((fresh (car-l cdr-l car-o cdr-o)
+            (== l `(,car-l . ,cdr-l))
+            (== o `(,car-o . ,cdr-o))
+            (prefixo x car-l car-o)
+            (prefix-allo x cdr-l cdr-o))))))
+
+(define appendo (lambda (l r o)
+    (conde
+        ((== l '()) (== r o))
+        ((fresh (car-l cdr-l cdr-o)
+            (== l `(,car-l . ,cdr-l))
+            (== o `(,car-l . ,cdr-o))
+            (appendo cdr-l r cdr-o))))))
+---
+
+@s ABC Example
+
+![ABC example](../diagrams/abc-example-formal.png "ABC example")
 
 --- main.mk.scm +=
 (define abc-hypergraph '(
@@ -285,7 +436,172 @@ Applying Will's law
     (o o l l l l r o o)))
 ---
 
-@K4 Example
+@s Using a zipper list
+
+How do you iterate through a list while "saving your spot"? One solution is to use a [zipper list](https://en.wikipedia.org/wiki/Zipper_(data_structure)). A zipper list here is defined as a triple $(l, x, r) : ([a], a, [a])$  where $l$ is a list of elements left of focus, $x$ is the element in focus, and $r$ is the list of elements to the right of the element.
+
+A relationship between a zipper-list and its "unfocused" list representation is as follows.
+
+--- main.mk.scm +=
+(define is-zipper-listo (lambda (zipper-list list)
+    (fresh (l x r)
+        (== zipper-list `(,l ,x ,r))
+        (appendo l `(,x . ,r) list))))
+---
+
+This is especially useful for context-aware "forall" assertions in miniKanren. As such we need a way to generate a list of all focuses from a given list. Thus it would have the type: $[a] \rightarrow [([a], a, [a])]$.
+
+A search of this type signature in [Hoogle](https://hoogle.haskell.org/?hoogle=%5Ba%5D%20-%3E%20%5B(%5Ba%5D%2C%20a%2C%20%5Ba%5D)%5D), gives the [splitEverywhere](https://hackage.haskell.org/package/utility-ht-0.0.16/docs/Data-List-HT.html#v:splitEverywhere) function, which does exactly this.
+
+--- main.mk.scm +=
+;; i.e, (windowo '(a b c) '((() a (b c)) ((a) b (c)) ((a b) c ())))
+(define windowo (lambda (l o)
+    (conde
+        ((== l '()) (== o '()))
+        ((fresh (car-l cdr-l car-o cdr-o cdr-l-zipper-lists)
+            (== l `(,car-l . ,cdr-l))
+            (== o `(,car-o . ,cdr-o))
+            (== car-o `(() ,car-l ,cdr-l))
+            (map-shoveo car-l cdr-l-zipper-lists cdr-o)
+            (windowo cdr-l cdr-l-zipper-lists))))))
+
+(define shoveo (lambda (a l o)
+    (fresh (left x right)
+        (== l `(,left ,x ,right))
+        (== o `((,a . ,left) ,x ,right)))))
+---
+
+--- main.pl +=
+window([], []).
+
+window([CarL|CdrL], [CarO|CdrO]) :-
+    CarO = [[], CarL, CdrL],
+    mapShove(CarL, CdrLZipperLists, CdrO),
+    window(CdrL, CdrLZipperLists).
+    
+shove(A, L, O) :-
+    L = [Left, X, Right],
+    O = [[A|Left], X, Right].
+---
+
+Let's extend this zipper idea to one that has **two** focuses instead of just one. This double zipper list $(l, x, m, y, r) : ([a], a, [a], a, [a])$ where $l, m, r$ are the interspersed lists and $x, y$ are the two foci. For terseness we call the double zipper list an *indexed pair*.
+
+--- main.mk.scm +=
+(define window2o (lambda (l o)
+    (fresh (zipper-lists)
+        (windowo l zipper-lists)
+        (flatmap-window2-helpero zipper-lists o))))
+
+(define window2-helpero (lambda (zipper-list indexed-pairs)
+    (fresh (l x r triples)
+        (== zipper-list `(,l ,x ,r))
+        (windowo r triples)
+        (map-make-indexed-pairo l x triples indexed-pairs))))
+
+(define make-indexed-pairo (lambda (l x triple o)
+    (fresh (m y r)
+        (== triple `(,m ,y ,r))
+        (== o `(,l ,x ,m ,y ,r)))))
+---
+
+--- main.pl +=
+window2(L, O) :-
+    window(L, ZipperLists),
+    flatmapWindow2Helper(ZipperLists, O).
+    
+window2Helper(ZipperList, IndexedPairs) :-
+    ZipperList = [L, X, R],
+    window(R, Triples),
+    mapMakeIndexedPair(L, X, Triples, IndexedPairs).
+    
+makeIndexedPair(L, X, [M, Y, R], [L, X, M, Y, R]).
+---
+
+And the relevant map/flatmap implementations
+
+--- main.mk.scm +=
+(define flatmap-window2-helpero (lambda (l o)
+    (conde
+        ((== l '()) (== o '()))
+        
+        ((fresh (car-l cdr-l o-left o-right)
+            (== l `(,car-l . ,cdr-l))
+            (window2-helpero car-l o-left)
+            (appendo o-left o-right o)
+            (flatmap-window2-helpero cdr-l o-right))))))
+
+(define map-shoveo (lambda (a l o)
+    (conde
+        ((== l '()) (== o '()))
+        ((fresh (car-l cdr-l car-o cdr-o)
+            (== l `(,car-l . ,cdr-l))
+            (== o `(,car-o . ,cdr-o))
+            (shoveo a car-l car-o)
+            (map-shoveo a cdr-l cdr-o))))))
+
+(define map-make-indexed-pairo (lambda (l x triples o)
+    (conde
+        ((== triples '()) (== o '()))
+        ((fresh (car-triples cdr-triples car-o cdr-o)
+            (== triples `(,car-triples . ,cdr-triples))
+            (== o `(,car-o . ,cdr-o))
+            (make-indexed-pairo l x car-triples car-o)
+            (map-make-indexed-pairo l x cdr-triples cdr-o))))))
+---
+
+--- main.pl +=
+flatmapWindow2Helper([], []).
+flatmapWindow2Helper([CarL|CdrL], O) :-
+    window2Helper(CarL, OLeft),
+    append(OLeft, ORight, O),
+    flatmapWindow2Helper(CdrL, ORight).
+    
+mapShove(_, [], []).
+mapShove(A, [CarL|CdrL], [CarO|CdrO]) :-
+    shove(A, CarL, CarO),
+    mapShove(A, CdrL, CdrO).
+    
+mapMakeIndexedPair(_, _, [], []).
+mapMakeIndexedPair(L, X, [CarTriples|CdrTriples], [CarO, CdrO]) :-
+    makeIndexedPair(L, X, CarTriples, CarO),
+    mapMakeIndexedPair(L, X, CdrTriples, CdrO).
+---
+
+@s Implementing flatmap
+
+To demonstrate flatmap, we need a suitable relation between an object and a list. A number and its multiset of primes is a good candidate relation.
+Since this is just a sample, I will only consider the numbers 1 through 9.
+
+--- main.mk.scm +=
+(define prime-factorso (lambda (x primes)
+    (fresh (y)
+        (== y `(,x ,primes))
+        (conde
+            ((== y '(1 ())))
+            ((== y '(2 (2))))
+            ((== y '(3 (3))))
+            ((== y '(4 (2 2))))
+            ((== y '(5 (5))))
+            ((== y '(6 (2 3))))
+            ((== y '(7 (7))))
+            ((== y '(8 (2 2 2))))
+            ((== y '(9 (3 3))))))))
+---
+
+Now we can write a flatmap function specialized for primeso.
+
+--- main.mk.scm +=
+(define flatmap-prime-factorso (lambda (l o)
+    (conde
+        ((== l '()) (== o '()))
+        ((fresh (car-l cdr-l o-left o-right)
+            (== l `(,car-l . ,cdr-l))
+            (prime-factorso car-l o-left)
+            (appendo o-left o-right o)
+            (flatmap-prime-factorso cdr-l o-right))))))
+---
+
+@s K4 Example
 
 The simplest example, the base case $K_4$.
 
@@ -358,7 +674,7 @@ public class Remove2Add1Test {
 
 Hopefully this makes benchmarking easier. I don't know why filter_cbs is taking so long.
 
---- main.pl
+--- main.pl +=
 riffle([], [], []).
 riffle([A|As], [], [A|As]).
 riffle([], [B|Bs], [B|Bs]).
@@ -471,13 +787,6 @@ abc_proof(Proof) :-
     abc_hypergraph(X),
     abc_cbs(Y),
     proves(X, Y, Proof).
-    
-my_filter(X) :-
-    filter_cbs([o, o, o, l, r], [
-        [l, o, o, o, l],
-        [l, o, o, o, r],
-        [l, r, o, o, o]
-    ], F).
 ---
 
 
@@ -486,14 +795,25 @@ my_filter(X) :-
 --- main.ramo.js
 import  { run, Rel, conde, exist, eq, conso, nilo } from 'https://esm.sh/ramo';
 
-const appendo = Rel((xs, ys, zs) => conde(
-  [nilo(xs), eq(ys, zs)],
-  exist((a, d, res) => [
-    conso(a, d, xs),
-    conso(a, res, zs),
-    appendo(d, ys, res)
-  ])
-));
+const riffleo = Rel((a, b, o) =>
+    exist((carA, cdrA, carB, cdrB, carO, cdrO, z0, z1) =>
+        conde(
+            // If `a` and `b` are both empty, then the output is empty
+            [nilo(a), nilo(b), nilo(o)],
+            
+            // If `a` is non-empty and `b` is empty, then the output is equal to `a`.
+            [conso(carA, cdrA, a), nilo(b), eq(o, a)],
+            
+            // If `a` is empty and `b` is non-empty, then the output is equal to `b`.
+            [nilo(a), conso(carB, cdrB, b), eq(o, b)],
+            
+            // When both `a` and `b` are non-empty
+            [conso(carA, cdrA, a), conso(carB, cdrB, b), conso(carO, cdrO, o),
+                conde(
+                    [eq(carO, carA), eq(z0, cdrA), eq(z1, b)],
+                    [eq(carO, carB), eq(z0, a), eq(z1, cdrB)]),
+                    
+                riffleo(z0, z1, cdrO)])))
 
 const roleo = Rel((role, el, er, biclique, eo) => [
     exist((x) => [
@@ -522,11 +842,11 @@ const allRoleso = Rel((a, b, c, d, e) =>
 const proveso = Rel((hypergraph, bicliques, steps) =>
     conde(
         [nilo(steps), anyLessThan3o(hypergraph)],
-        exist((step, restSteps, e1 e2 el er eo restHyperedges, biclique, restBicliques, filteredBicliques newHypergraph) => [
+        exist((step, restSteps, e1, e2, el, er, eo, restHyperedges, biclique, restBicliques, filteredBicliques, newHypergraph) => [
             conso(step, restSteps, steps),
 
             // Pick two hyperedges
-            riffleo([e1, e2], rest-hyperedges, hypergraph),
+            riffleo([e1, e2], restHyperedges, hypergraph),
             
             // Order matters since one will be considered "left" and the other "right"
             riffleo([el], [er], [e1, e2]),
@@ -540,8 +860,8 @@ const proveso = Rel((hypergraph, bicliques, steps) =>
             filterBicliqueso(biclique, restBicliques, filteredBicliques),
             
             // Recur on the rest of the steps with the new hypergraph
-            conso(eo, restHyperedges, newHypergraph)
-            proveso(newHypergarph, filteredBicliques, restSteps)])))
+            conso(eo, restHyperedges, newHypergraph),
+            proveso(newHypergraph, filteredBicliques, restSteps)])))
 
 const lessThan3o = Rel((hyperedge) =>
     exist((n) => [
@@ -553,7 +873,7 @@ const lessThan3o = Rel((hyperedge) =>
         sizeo(hyperedge, n)]))
             
 const anyLessThan3o = Rel((hypergraph) =>
-    exist((hyperedge restHyperedges) => [
+    exist((hyperedge, restHyperedges) => [
         conso(hyperedge, restHyperedges, hypergraph),
         conde(
             lessThan3o(hyperedge),
@@ -561,25 +881,521 @@ const anyLessThan3o = Rel((hypergraph) =>
 
 const sizeo = Rel((hyperedge, size) =>
     conde(
-        [nilo(hyperedge), eq(sizeo, ['z'])],
+        [nilo(hyperedge), eq(size, ['z'])],
         exist((first, rest, sizeRec) => [
             conso(first, rest, hyperedge),
+            conde(
+                [eq(first, 0), eq(size, sizeRec)],
+                [eq(first, 1), conso('s', sizeRec, size)],
+            ),
+            sizeo(rest, sizeRec)])))
             
             
-const filterBicliques = Rel((x, l, o) =>
+const filterBicliqueso = Rel((x, l, o) =>
     conde(
         [nilo(l), nilo(o)],
-        fresh((carL, cdrL, oRest) => [
+        exist((carL, cdrL, oRest) => [
             conso(carL, cdrL, l),
             conde(
                 [conso(carL, oRest, o),
                     allDisjointo(x, carL)],
                 [eq(o, oRest),
                     anyOverlapo(x, carL)]),
-            filterBicliques(x, cdrL, oRest)])))
+            filterBicliqueso(x, cdrL, oRest)])))
             
-console.log(run()(q => exist((a, b, c, d, e) => [eq(q, [a, b, c, d, e]), roleo(a, b, c, d, e)])))
+const overlapo = Rel((u, v) =>
+    exist((x) => [
+        eq(x, [u, v]),
+        conde(
+            eq(x, ['l', 'l']),
+            eq(x, ['l', 'r']),
+            eq(x, ['r', 'l']),
+            eq(x, ['r', 'r']))]))
+            
+const anyOverlapo = Rel((x, y) =>
+    exist((carX, cdrX, carY, cdrY) => [
+        conso(carX, cdrX, x),
+        conso(carY, cdrY, y),
+        conde(
+            overlapo(carX, carY),
+            anyOverlapo(cdrX, cdrY))]))
+            
+const disjointo = Rel((u, v) =>
+    conde(
+        eq(u, 'o'),
+        eq(v, 'o')))
+        
+const allDisjointo = Rel((x, y) =>
+    conde(
+        [nilo(x), nilo(y)],
+        exist((carX, cdrX, carY, cdrY) => [
+            conso(carX, cdrX, x),
+            conso(carY, cdrY, y),
+            disjointo(carX, carY),
+            allDisjointo(cdrX, cdrY)])))
+            
 
+const abcHypergraph = [
+    [1, 0, 1, 1, 0, 0, 0, 0, 0],
+    [0, 1, 0, 0, 1, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 1, 1]]
+    
+const abcBicliques = [
+    ['l', 'r', 'o', 'o', 'o', 'o', 'o', 'o', 'o'],
+    ['o', 'o', 'o', 'o', 'o', 'l', 'r', 'o', 'o'],
+    // ...
+    ['o', 'o', 'l', 'l', 'l', 'l', 'r', 'o', 'o']]
+
+
+const k4Hypergraph = [
+    [1, 1, 1, 0],
+    [0, 1, 1, 1]]
+    
+const k4Bicliques = [
+    ['l', 'o', 'o', 'r']]
+
+---
+
+@s A translation of the proves relation to Python and Typescript
+
+Imports
+
+--- main.py
+from dataclasses import dataclass
+from typing import List, Optional, Tuple
+---
+
+--- main.ts
+
+---
+
+Type declarations
+
+--- main.py +=
+Biclique = List[str] # List[Literal['l', 'r', 'o']]
+Hyperedge = List[str] # List[Literal['x', 'o']]
+ProofStep = List[str] # List[Literal['a', 'b', 'u', 'v', 'w', 'o']]
+Hypergraph = List[Hyperedge]
+---
+
+--- main.ts +=
+type Biclique = Array<('l' | 'r' | 'o')>
+type Hyperedge = Array<('x' | 'o')>
+type ProofStep = Array<('a' | 'b' | 'u' | 'v' | 'w' | 'o')>
+type Hypergraph = Array<Hyperedge>
+---
+
+
+--- main.py +=
+def any_overlap(a: Biclique, b: Biclique) -> bool:
+    num_vertices = len(a[0])
+    
+    for v in range(num_vertices):
+        x = a[v] + b[v]
+        
+        if x == 'll' or x == 'lr' or x == 'rl' or x == 'rr':
+            return True
+
+    return False
+---
+
+--- main.ts +=
+function anyOverlap(a: Biclique, b: Biclique): boolean {
+    const numVertices = a[0].length;
+    
+    for (let v = 0; v < numVertices; v++) {
+        const x = a[v] + b[v]
+        
+        if (x === 'll' || x === 'lr' || x === 'rl' || x === 'rr') {
+            return true;
+        }
+    }
+    
+    return false;
+}
+---
+
+--- main.py +=
+def any_edge_has_less_than_three(h: Hypergraph) -> bool:
+    for hyperedge in h:
+        edge_size = 0
+        for vertex in hyperedge:
+            if vertex == 'x':
+                edge_size += 1
+
+        if edge_size < 3:
+            return True
+            
+    return False
+---
+
+--- main.ts +=
+function anyEdgeHasLessThanThree(h: Hypergraph): boolean {
+    for (let hyperedge of h) {
+        let edgeSize = 0;
+        for (let vertex of hyperedge) {
+            if (vertex === 'x') {
+                edgeSize += 1;
+            }
+        }
+        
+        if (edgeSize < 3) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+---
+
+--- main.py +=
+def attempt_proof_step(
+    a: Hyperedge,
+    b: Hyperedge,
+    biclique: Biclique
+) -> Optional[Tuple[ProofStep, Hyperedge]]:
+
+    num_vertices = len(a)
+    proof_step: ProofStep = []
+    new_h: Hyperedge = []
+    
+    for v in range(num_vertices):
+        x = a[v] + b[v] + biclique[v]
+
+        if x == 'xol':
+            proof_step.append('a')
+            new_h.append('o')
+
+        elif x == 'oxr':
+            proof_step.append('b')
+            new_h.append('o')
+                
+        elif x == 'xoo':
+            proof_step.append('u')
+            new_h.append('x')
+                
+        elif x == 'oxo':
+            proof_step.append('v')
+            new_h.append('x')
+                
+        elif x == 'xxo':
+            proof_step.append('w')
+            new_h.append('x')
+                
+        elif x == 'ooo':
+            proof_step.append('o')
+            new_h.append('o')
+                
+        else:
+            return None
+            
+    return (proof_step, new_h)
+---
+
+--- main.ts +=
+function attemptProofStep(
+    a: Hyperedge,
+    b: Hyperedge,
+    biclique: Biclique
+): [ProofStep, Hyperedge] | null {
+    
+    const numVertices = a.length;
+    let proofStep: ProofStep = [];
+    let newH: Hyperedge = [];
+    
+    for (let v = 0; v < numVertices; v++) {
+        const x = a[v] + b[v] + biclique[v];
+    
+        if (x === 'xol') {
+            proofStep.push('a');
+            newH.push('o');
+
+        } else if (x === 'oxr') {
+            proofStep.push('b');
+            newH.push('o');
+
+        } else if (x === 'xoo') {
+            proofStep.push('u');
+            newH.push('x');
+        
+        } else if (x === 'oxo') {
+            proofStep.push('v');
+            newH.push('x');
+        
+        } else if (x === 'xxo') {
+            proofStep.push('w');
+            newH.push('x');
+        
+        } else if (x === 'ooo') {
+            proofStep.push('o');
+            newH.push('o');
+        
+        } else {
+            return null;
+        }
+    }
+    
+    return [proofStep, newH];
+}
+
+---
+
+--- main.py +=
+def remove2add1(h: Hypergraph, i: int, j: int, new_h: Hyperedge) -> Hypergraph:
+    result = []
+    
+    for index in range(len(h)):
+        if index != i and index != j:
+            result.append(h[index])
+            
+    result.append(new_h)
+    return result
+---
+
+--- main.ts +=
+function remove2add1(h: Hypergraph, i: number, j: number, newH: Hyperedge): Hypergraph {
+    let result = [];
+    
+    for (let index = 0; index < h.length; index++) {
+        if (index !== i && index !== j) {
+            result.push(h[index]);
+        }
+    }
+    
+    result.push(newH);
+    return result;
+}
+---
+
+--- main.py +=
+def proves(h: Hypergraph, bicliques: List[Biclique]) -> Optional[List[ProofStep]]:
+    num_vertices = len(h[0])
+
+    if any_edge_has_less_than_three(h):
+        return []
+    
+    # Any biclique between two hyperedges leads to a new proveable hypergraph
+    for i in range(len(h)):
+        for j in range(len(h)):
+            for biclique in bicliques:
+                if i != j:
+                    attempt = attempt_proof_step(h[i], h[j], biclique)
+
+                    if attempt is not None:
+                        proof_step, new_hyperedge = attempt
+
+                        proof_steps = proves(
+                            remove2add1(h, i, j, new_hyperedge),
+                            [x for x in bicliques if not any_overlap(biclique, x)]
+                        )
+
+                        if proof_steps is not None:
+                            return proof_steps + [proof_step]
+    
+    return None
+---
+
+--- main.ts +=
+function proves(h: Hypergraph, bicliques: Array<Biclique>): (Array<ProofStep> | null) {
+    if (anyEdgeHasLessThanThree(h)) {
+        return [];
+    }
+
+    for (let i = 0; i < h.length; i++) {
+        for (let j = 0; j < h.length; j++) {
+            for (let biclique of bicliques) {
+                if (i !== j) {
+                    const attempt = attemptProofStep(h[i], h[j], biclique);
+                    
+                    if (attempt !== null) {
+                        const [proofStep, newHyperedge] = attempt;
+                        
+                        const proofSteps = proves(
+                            remove2add1(h, i, j, newHyperedge),
+                            bicliques.filter(x => !anyOverlap(x, biclique))
+                        );
+                        
+                        if (proofSteps !== null) {
+                            return proofSteps.concat([proofStep]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    return null;
+}
+
+---
+
+@s Extracting the Sperner family
+We only need to deal with the smallest subsets, so we can create Sperner families. I do not know an efficient way to do thsi other than by pairwise enumeration.
+
+The algorithm only works if the hypergraph is simple, that is, there are no repeated edges. Otherwise two equal hyperedges would be subsets of each other and neither would be included.
+
+--- main.py +=
+def sperner_family(hypergraph: Hypergraph) -> Hypergraph:
+    result = []
+    for i in range(len(hypergraph)):
+        any_subset = False
+        for j in range(len(hypergraph)):
+            if i != j and is_subset(hypergraph[j], hypergraph[i]):
+                any_subset = True
+                break
+
+        if not any_subset:
+            result.append(hypergraph[i])
+            
+    return result
+---
+
+--- main.ts +=
+function spernerFamily(hypergraph: Hypergraph): Hypergraph {
+    let result = [];
+    for (let i = 0; i < hypergraph.length; i++) {
+        let anySubset = false;
+        for (let j = 0; j < hypergraph.length; j++) {
+            if (i !== j && isSubset(hypergraph[j], hypergraph[i])) {
+                anySubset = true;
+                break;
+            }
+        }
+
+        if (!anySubset) {
+            result.push(hypergraph[i]);
+        }
+    }
+
+    return result;
+}
+---
+
+--- main.py +=
+def is_subset(subset: Hyperedge, superset: Hyperedge) -> bool:
+    num_vertices = len(subset)
+    
+    for i in range(num_vertices):
+        if subset[i] == 'x' and superset[i] == 'o':
+            return False
+            
+    return True
+    
+test = [
+    ['x', 'x', 'o', 'x', 'o'],
+    ['x', 'o', 'o', 'x', 'o'],
+    ['x', 'o', 'o', 'x', 'x']]
+    
+print(sperner_family(test));
+---
+
+
+--- main.ts +=
+function isSubset(subset: Hyperedge, superset: Hyperedge): boolean {
+    const numVertices = subset.length;
+
+    for (let i = 0; i < numVertices; i++) {
+        if (subset[i] === 'x' && superset[i] === 'o') {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+const test = [
+    ['x', 'x', 'o', 'x', 'o'],
+    ['x', 'o', 'o', 'x', 'o'],
+    ['x', 'o', 'o', 'x', 'x']];
+    
+console.log(spernerFamily(test));
+---
+
+@s Detecting odd cycles
+
+
+
+
+--- main.py +=
+k4_hypergraph: Hypergraph = [
+    ['x', 'x', 'x', 'o'],
+    ['o', 'x', 'x', 'x']]
+    
+k4_bicliques: List[Biclique] = [
+    ['l', 'o', 'o', 'r']]
+
+
+abc_hypergraph: Hypergraph = [
+    ['x', 'o', 'x', 'x', 'o', 'o', 'o', 'o', 'o'],
+    ['o', 'x', 'o', 'o', 'x', 'x', 'o', 'o', 'o'],
+    ['o', 'o', 'o', 'o', 'o', 'o', 'x', 'x', 'x']]
+    
+abc_bicliques: List[Biclique] = [
+    ['l', 'r', 'o', 'o', 'o', 'o', 'o', 'o', 'o'],
+    ['o', 'o', 'o', 'o', 'o', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'o', 'l', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'o', 'l', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'l', 'o', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'l', 'o', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'l', 'l', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'l', 'l', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'o', 'o', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'o', 'l', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'o', 'l', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'l', 'o', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'l', 'o', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'l', 'l', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'l', 'l', 'l', 'r', 'o', 'o']]
+    
+print(proves(abc_hypergraph, abc_bicliques))
+---
+
+--- main.ts +=
+const k4Hypergraph: Hypergraph = [
+    ['x', 'x', 'x', 'o'],
+    ['o', 'x', 'x', 'x']]
+    
+const k4Bicliques: Array<Biclique> = [
+    ['l', 'o', 'o', 'r']]
+
+const abcHypergraph: Hypergraph = [
+    ['x', 'o', 'x', 'x', 'o', 'o', 'o', 'o', 'o'],
+    ['o', 'x', 'o', 'o', 'x', 'x', 'o', 'o', 'o'],
+    ['o', 'o', 'o', 'o', 'o', 'o', 'x', 'x', 'x']]
+    
+const abcBicliques: Array<Biclique> = [
+    ['l', 'r', 'o', 'o', 'o', 'o', 'o', 'o', 'o'],
+    ['o', 'o', 'o', 'o', 'o', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'o', 'l', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'o', 'l', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'l', 'o', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'l', 'o', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'l', 'l', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'l', 'l', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'o', 'o', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'o', 'l', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'o', 'l', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'l', 'o', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'l', 'o', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'l', 'l', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'l', 'l', 'l', 'r', 'o', 'o']]
+    
+console.log(proves(abcHypergraph, abcBicliques))
+---
+
+@s Detecting odd cycles in a graph, in Javascript
+
+Given a graph, return a Sperner hypergraph of its odd cycles, that is, don't include any odd cycles which are proper supersets if a smaller odd cycle exists.
+
+
+Start at vertex zero and visit all your neighbors 
+
+--- graph.js
+
+function allOddCycles(g) {
+    
+
+}
 
 ---
 
@@ -595,6 +1411,10 @@ For example, consider the above graph $G$, its 4 odd cycles, and its *odd cycle 
 
 An efficient representation of a hypergraph is to use a two-dimensional boolean array where the rows are hyperedges and the columns are vertices. Each cell  $(e, v)$ holds the value `true` if vertex $v$ is included in the hyper-edge $e$, and `false` otherwise.
 
+@ Results that would disprove this non-3-colorability deduction system
 
+1. Is there a 4-critical graph (achieved by the Hajos construction) that does not have a proof string? That is, is this deduction system sound, but incomplete?
 
+2. Is there a 4-critical graph that requires a hyperedge to be used twice?
 
+3. Is there a 4-critical graph that requires a biclique to be used twice? That is, is the rearrangement lemma false?

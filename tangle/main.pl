@@ -1,3 +1,39 @@
+% File declaration for any translations into Prolog
+window([], []).
+
+window([CarL|CdrL], [CarO|CdrO]) :-
+    CarO = [[], CarL, CdrL],
+    mapShove(CarL, CdrLZipperLists, CdrO),
+    window(CdrL, CdrLZipperLists).
+    
+shove(A, L, O) :-
+    L = [Left, X, Right],
+    O = [[A|Left], X, Right].
+window2(L, O) :-
+    window(L, ZipperLists),
+    flatmapWindow2Helper(ZipperLists, O).
+    
+window2Helper(ZipperList, IndexedPairs) :-
+    ZipperList = [L, X, R],
+    window(R, Triples),
+    mapMakeIndexedPair(L, X, Triples, IndexedPairs).
+    
+makeIndexedPair(L, X, [M, Y, R], [L, X, M, Y, R]).
+flatmapWindow2Helper([], []).
+flatmapWindow2Helper([CarL|CdrL], O) :-
+    window2Helper(CarL, OLeft),
+    append(OLeft, ORight, O),
+    flatmapWindow2Helper(CdrL, ORight).
+    
+mapShove(_, [], []).
+mapShove(A, [CarL|CdrL], [CarO|CdrO]) :-
+    shove(A, CarL, CarO),
+    mapShove(A, CdrL, CdrO).
+    
+mapMakeIndexedPair(_, _, [], []).
+mapMakeIndexedPair(L, X, [CarTriples|CdrTriples], [CarO, CdrO]) :-
+    makeIndexedPair(L, X, CarTriples, CarO),
+    mapMakeIndexedPair(L, X, CdrTriples, CdrO).
 riffle([], [], []).
 riffle([A|As], [], [A|As]).
 riffle([], [B|Bs], [B|Bs]).
@@ -110,11 +146,4 @@ abc_proof(Proof) :-
     abc_hypergraph(X),
     abc_cbs(Y),
     proves(X, Y, Proof).
-    
-my_filter(X) :-
-    filter_cbs([o, o, o, l, r], [
-        [l, o, o, o, l],
-        [l, o, o, o, r],
-        [l, r, o, o, o]
-    ], F).
 

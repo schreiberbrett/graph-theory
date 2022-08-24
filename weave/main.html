@@ -100,9 +100,19 @@ function helloWorld() {
 <pre class="prettyprint">
 (load "~/miniKanren/mk.scm")
 
-<span class="nocode pln">{The riffle relation, <a href="main.html#1:9">9</a>}</span>
+<span class="nocode pln">{The riffle relation, <a href="main.html#1:14">14</a>}</span>
 </pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:8">8</a>, <a href="main.html#1:8">8</a> and <a href="main.html#1:9">9</a></p>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:10">10</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:13">13</a> and <a href="main.html#1:14">14</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.pl</strong> <a href="main.html#1:4">4</a>}</span>
+<pre class="prettyprint">
+% File declaration for any translations into Prolog
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a> and <a href="main.html#1:16">16</a></p>
 
 
 </div>
@@ -153,7 +163,7 @@ function helloWorld() {
 </table>
 <p>Below is an example with six vertices, one in each role and labelled by its role. The left includes the hyperedges <span class="math">e_l</span> and <span class="math">e_r</span>, the right includes the hyperedge <span class="math">e_o</span>.
 </p>
-<p><img src="../diagrams/the-six-roles.jpg" alt="the six roles" title="The six different roles, visualized">
+<p><img src="../diagrams/the-six-roles-formally.png" alt="the six roles" title="The six different roles, visualized">
 </p>
 
 <div class="codeblock">
@@ -170,7 +180,7 @@ function helloWorld() {
             ((== x '(w 1 1 o 1)))
             ((== x '(o 0 0 o 0)))))))
 </pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:8">8</a>, <a href="main.html#1:8">8</a> and <a href="main.html#1:9">9</a></p>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:10">10</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:13">13</a> and <a href="main.html#1:14">14</a></p>
 
 
 </div>
@@ -189,7 +199,7 @@ function helloWorld() {
             (roleo car-a car-b car-c car-d car-e)
             (all-roleso cdr-a cdr-b cdr-c cdr-d cdr-e))))))
 </pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:8">8</a>, <a href="main.html#1:8">8</a> and <a href="main.html#1:9">9</a></p>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:10">10</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:13">13</a> and <a href="main.html#1:14">14</a></p>
 
 
 </div>
@@ -210,7 +220,7 @@ function helloWorld() {
             ;; Order matters since one will be considered "left" and the other "right"
             (riffleo `(,el) `(,er) `(,e1 ,e2))
             
-            ;; Pick one cbs
+            ;; Pick one biclique
             (riffleo `(,biclique) rest-bicliques bicliques)
 
             ;; These hyperedges must be connected
@@ -218,8 +228,17 @@ function helloWorld() {
             
             (filter-bicliqueso biclique rest-bicliques filtered-bicliques)
             
-            ;; Recur on the rest of the steps with the newly-made h-out
+            ;; Recur on the rest of the steps with the new hypergraph
             (proveso `(,eo . ,rest-hyperedges) filtered-bicliques rest-steps))))))
+
+(define less-than-3o (lambda (hyperedge)
+    (fresh (n)
+        (conde
+            ((== n '(z)))
+            ((== n '(s z)))
+            ((== n '(s s z))))
+            
+        (sizeo hyperedge n))))
 
 (define any-less-than-3o (lambda (h)
     (fresh (car-h cdr-h)
@@ -228,18 +247,9 @@ function helloWorld() {
             ((less-than-3o car-h))
             ((any-less-than-3o cdr-h))))))
 
-(define less-than-3o (lambda (hyperedge)
-    (fresh (n)
-        (conde
-            ((== n 'z))
-            ((== n `(s . z)))
-            ((== n `(s s . z))))
-            
-        (sizeo hyperedge n))))
-     
 <span class="nocode pln">{Sizeo, <a href="main.html#1:8">8</a>}</span>
 </pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:8">8</a>, <a href="main.html#1:8">8</a> and <a href="main.html#1:9">9</a></p>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:10">10</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:13">13</a> and <a href="main.html#1:14">14</a></p>
 
 
 </div>
@@ -316,7 +326,7 @@ function helloWorld() {
             (disjointo car-x car-y)
             (all-disjointo cdr-x cdr-y))))))
 </pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:8">8</a>, <a href="main.html#1:8">8</a> and <a href="main.html#1:9">9</a></p>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:10">10</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:13">13</a> and <a href="main.html#1:14">14</a></p>
 
 
 </div>
@@ -331,7 +341,7 @@ function helloWorld() {
 (define sizeo (lambda (hyperedge size)
     (fresh (rest)
         (conde
-            ((== hyperedge '()) (== size 'z))
+            ((== hyperedge '()) (== size '(z)))
             ((== hyperedge `(0 . ,rest)) (sizeo rest size))
             ((== hyperedge `(1 . ,rest)) (sizeo rest `(s . ,size)))))))
 </pre>
@@ -339,29 +349,182 @@ function helloWorld() {
 
 <p class="seealso">Used in section <a href="main.html#1:5">5</a></p>
 </div>
-<p>Applying Will's law
+<p>Applying <strong>the correctness-preserving transformation</strong>.
 </p>
 
 <div class="codeblock">
 <span class="codeblock_name">{Sizeo <a href="main.html#1:8">8</a>} :=</span>
 <pre class="prettyprint">
 (define sizeo (lambda (hyperedge size)
-    (fresh (first rest size-rec)
-        (conde
-            ((== hyperedge '()) (== size 'z))
-            ((== hyperedge `(,first . ,rest))
-                (conde
-                    ((== first 0) (== size size-rec))
-                    ((== first 1) (== size `(s . ,size-rec))))
-                (sizeo rest size-rec))))))
+    (conde
+        ((== hyperedge '()) (== size '(z)))
+        ((fresh (first rest size-rec)
+            (== hyperedge `(,first . ,rest))
+            (conde
+                ((== first 0) (== size size-rec))
+                ((== first 1) (== size `(s . ,size-rec))))
+            (sizeo rest size-rec))))))
 </pre>
 
 
 <p class="seealso">Used in section <a href="main.html#1:5">5</a></p>
 </div>
-<p>@ABC Example
+</div>
+<a name="1:9"><div class="section"><h4>9. Verifying the biclique is in the graph</h4></a>
+<p>Assume the given graph is lexicographically ordered. So when it is riffled, the edges in the biclique are also lexicographically ordered.
 </p>
-<p><img src="../diagrams/abc-example.jpg" alt="ABC example" title="ABC example">
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
+<pre class="prettyprint">
+
+
+(define all-has-botho (lambda (proof-string biclique-edges)
+    (conde
+        ((== biclique-edges '()))
+        ((fresh (car-l cdr-l)
+            (== biclique-edges `(,car-l . ,cdr-l))
+            (has-botho proof-string car-l)
+            (all-has-botho proof-string cdr-l))))))
+            
+(define has-botho (lambda (proof-string edge)
+    (fresh (x) ;; Needed for some reason to complete the conjunction
+        (has-lo proof-string edge)
+        (has-ro proof-string edge))))
+                
+(define has-lo (lambda (proof-string edge)
+    (fresh (car-proof-string cdr-proof-string car-edge cdr-edge)
+        (== proof-string `(,car-proof-string . ,cdr-proof-string))
+        (== edge `(,car-edge . ,cdr-edge))
+        (conde
+            ((== car-proof-string 'l) (== car-edge 1))
+            ((has-lo cdr-proof-string cdr-edge))))))
+
+(define has-ro (lambda (proof-string edge)
+    (fresh (car-proof-string cdr-proof-string car-edge cdr-edge)
+        (== proof-string `(,car-proof-string . ,cdr-proof-string))
+        (== edge `(,car-edge . ,cdr-edge))
+        (conde
+            ((== car-proof-string 'r) (== car-edge 1))
+            ((has-ro cdr-proof-string cdr-edge))))))
+
+
+(define all-pairso (lambda (l out)
+    (conde
+        ((fresh (a b)
+            (== l `(,a ,b)) (== out `((,a ,b)))))
+            
+        ((fresh (a b c)
+            (== l `(,a ,b ,c))
+            (== out `((,a ,b) (,a ,c) (,b ,c)))))
+        
+        ((fresh (a b c cdr-l out-rec my-pairs)
+            (== l `(,a ,b ,c . ,cdr-l))
+            (prefix-allo a `(,b ,c . ,cdr-l) my-pairs)
+            (appendo my-pairs out-rec out)
+            (all-pairso `(,b ,c . ,cdr-l) out-rec))))))
+
+(define graph-has-bicliqueso (lambda (proof-string graph)
+    (fresh (pairs filtered-pairs edges rest-graph)
+        (all-pairs-indexedo proof-string pairs)
+        (filter-is-lr-pairo pairs filtered-pairs)
+        (map-needed-edgeo filtered-pairs edges)
+        (riffleo edges rest-graph graph))))
+            
+(define filter-is-lr-pairo (lambda (l o)
+    (conde
+        ((== l '()) (== o '()))
+        ((fresh (car-l cdr-l cdr-o)
+            (== l `(,car-l . ,cdr-l))
+            
+            (conde
+                ((== o `(,car-l . ,cdr-o))
+                    (is-lr-pairo car-l))
+                ((== o cdr-o)
+                    (not-is-lr-pairo car-l)))
+            
+            (filter-is-lr-pairo cdr-l cdr-o))))))
+
+(define is-lr-pairo (lambda (indexed-pair)
+    (fresh (l1 x l2 y l3 z)
+        (== indexed-pair `(,l1 ,x ,l2 ,y ,l3))
+        (== z `(,x ,y))
+        (conde
+            ((== z '(l r)))
+            ((== z '(r l)))))))
+            
+(define not-is-lr-pairo (lambda (indexed-pair)
+    (fresh (l1 x l2 y l3 z)
+        (== indexed-pair `(,l1 ,x ,l2 ,y ,l3))
+        (== z `(,x ,y))
+        (conde
+            ((== x '(l l)))
+            ((== x '(o l)))
+            ((== z '(l o)))
+            ((== z '(o o)))
+            ((== z '(r o)))
+            ((== z '(o r)))
+            ((== z '(r r)))))))
+
+(define map-needed-edgeo (lambda (l o)
+    (conde
+        ((== l '()) (== o '()))
+        ((fresh (car-l cdr-l car-o cdr-o)
+            (== l `(,car-l . ,cdr-l))
+            (== o `(,car-o . ,cdr-o))
+            (needed-edgeo car-l car-o)
+            (map-needed-edgeo cdr-l cdr-o))))))
+
+
+(define needed-edgeo (lambda (indexed-pair edge)
+    (fresh (l1 x l2 y l3 l1-zeroes l2-zeroes l3-zeroes o1o o1o1o)
+        (== indexed-pair `(,l1 ,x ,l2 ,y ,l3))
+        (== o1o1o edge)
+        (map-zeroo l1 l1-zeroes)
+        (map-zeroo l2 l2-zeroes)
+        (map-zeroo l3 l3-zeroes)
+        (appendo l1-zeroes `(1 . ,l2-zeroes) o1o)
+        (appendo o1o `(1 . ,l3-zeroes) o1o1o))))
+        
+(define map-zeroo (lambda (l o)
+    (conde
+        ((== l '()) (== o '()))
+        ((fresh (car-l cdr-l car-o cdr-o)
+            (== l `(,car-l . ,cdr-l))
+            (== o `(,car-o . ,cdr-o))
+            (zeroo car-o)
+            (map-zeroo cdr-l cdr-o))))))
+
+(define zeroo (lambda (x)
+    (== x 0)))
+            
+(define prefixo (lambda (x l o)
+    (== o `(,x ,l))))
+
+(define prefix-allo (lambda (x l o)
+    (conde
+        ((==  l '()) (== o '()))
+        ((fresh (car-l cdr-l car-o cdr-o)
+            (== l `(,car-l . ,cdr-l))
+            (== o `(,car-o . ,cdr-o))
+            (prefixo x car-l car-o)
+            (prefix-allo x cdr-l cdr-o))))))
+
+(define appendo (lambda (l r o)
+    (conde
+        ((== l '()) (== r o))
+        ((fresh (car-l cdr-l cdr-o)
+            (== l `(,car-l . ,cdr-l))
+            (== o `(,car-l . ,cdr-o))
+            (appendo cdr-l r cdr-o))))))
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:10">10</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:13">13</a> and <a href="main.html#1:14">14</a></p>
+
+
+</div>
+</div>
+<a name="1:10"><div class="section"><h4>10. ABC Example</h4></a>
+<p><img src="../diagrams/abc-example-formal.png" alt="ABC example" title="ABC example">
 </p>
 
 <div class="codeblock">
@@ -390,12 +553,231 @@ function helloWorld() {
     (o o l l l o r o o)
     (o o l l l l r o o)))
 </pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:8">8</a> and <a href="main.html#1:9">9</a></p>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:13">13</a> and <a href="main.html#1:14">14</a></p>
 
 
 </div>
-<p>@K4 Example
+</div>
+<a name="1:11"><div class="section"><h4>11. Using a zipper list</h4></a>
+<p>How do you iterate through a list while "saving your spot"? One solution is to use a <a href="https://en.wikipedia.org/wiki/Zipper_(data_structure)">zipper list</a>. A zipper list here is defined as a triple <span class="math">(l, x, r) : ([a], a, [a])</span>  where <span class="math">l</span> is a list of elements left of focus, <span class="math">x</span> is the element in focus, and <span class="math">r</span> is the list of elements to the right of the element.
 </p>
+<p>A relationship between a zipper-list and its "unfocused" list representation is as follows.
+</p>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
+<pre class="prettyprint">
+(define is-zipper-listo (lambda (zipper-list list)
+    (fresh (l x r)
+        (== zipper-list `(,l ,x ,r))
+        (appendo l `(,x . ,r) list))))
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:10">10</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:13">13</a> and <a href="main.html#1:14">14</a></p>
+
+
+</div>
+<p>This is especially useful for context-aware "forall" assertions in miniKanren. As such we need a way to generate a list of all focuses from a given list. Thus it would have the type: <span class="math">[a] \rightarrow [([a], a, [a])]</span>.
+</p>
+<p>A search of this type signature in <a href="https://hoogle.haskell.org/?hoogle=%5Ba%5D%20-%3E%20%5B(%5Ba%5D%2C%20a%2C%20%5Ba%5D)%5D">Hoogle</a>, gives the <a href="https://hackage.haskell.org/package/utility-ht-0.0.16/docs/Data-List-HT.html#v:splitEverywhere">splitEverywhere</a> function, which does exactly this.
+</p>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
+<pre class="prettyprint">
+;; i.e, (windowo '(a b c) '((() a (b c)) ((a) b (c)) ((a b) c ())))
+(define windowo (lambda (l o)
+    (conde
+        ((== l '()) (== o '()))
+        ((fresh (car-l cdr-l car-o cdr-o cdr-l-zipper-lists)
+            (== l `(,car-l . ,cdr-l))
+            (== o `(,car-o . ,cdr-o))
+            (== car-o `(() ,car-l ,cdr-l))
+            (map-shoveo car-l cdr-l-zipper-lists cdr-o)
+            (windowo cdr-l cdr-l-zipper-lists))))))
+
+(define shoveo (lambda (a l o)
+    (fresh (left x right)
+        (== l `(,left ,x ,right))
+        (== o `((,a . ,left) ,x ,right)))))
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:10">10</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:13">13</a> and <a href="main.html#1:14">14</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.pl</strong> <a href="main.html#1:4">4</a>} +=</span>
+<pre class="prettyprint">
+window([], []).
+
+window([CarL|CdrL], [CarO|CdrO]) :-
+    CarO = [[], CarL, CdrL],
+    mapShove(CarL, CdrLZipperLists, CdrO),
+    window(CdrL, CdrLZipperLists).
+    
+shove(A, L, O) :-
+    L = [Left, X, Right],
+    O = [[A|Left], X, Right].
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a> and <a href="main.html#1:16">16</a></p>
+
+
+</div>
+<p>Let's extend this zipper idea to one that has <strong>two</strong> focuses instead of just one. This double zipper list <span class="math">(l, x, m, y, r) : ([a], a, [a], a, [a])</span> where <span class="math">l, m, r</span> are the interspersed lists and <span class="math">x, y</span> are the two foci. For terseness we call the double zipper list an <em>indexed pair</em>.
+</p>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
+<pre class="prettyprint">
+(define window2o (lambda (l o)
+    (fresh (zipper-lists)
+        (windowo l zipper-lists)
+        (flatmap-window2-helpero zipper-lists o))))
+
+(define window2-helpero (lambda (zipper-list indexed-pairs)
+    (fresh (l x r triples)
+        (== zipper-list `(,l ,x ,r))
+        (windowo r triples)
+        (map-make-indexed-pairo l x triples indexed-pairs))))
+
+(define make-indexed-pairo (lambda (l x triple o)
+    (fresh (m y r)
+        (== triple `(,m ,y ,r))
+        (== o `(,l ,x ,m ,y ,r)))))
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:10">10</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:13">13</a> and <a href="main.html#1:14">14</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.pl</strong> <a href="main.html#1:4">4</a>} +=</span>
+<pre class="prettyprint">
+window2(L, O) :-
+    window(L, ZipperLists),
+    flatmapWindow2Helper(ZipperLists, O).
+    
+window2Helper(ZipperList, IndexedPairs) :-
+    ZipperList = [L, X, R],
+    window(R, Triples),
+    mapMakeIndexedPair(L, X, Triples, IndexedPairs).
+    
+makeIndexedPair(L, X, [M, Y, R], [L, X, M, Y, R]).
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a> and <a href="main.html#1:16">16</a></p>
+
+
+</div>
+<p>And the relevant map/flatmap implementations
+</p>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
+<pre class="prettyprint">
+(define flatmap-window2-helpero (lambda (l o)
+    (conde
+        ((== l '()) (== o '()))
+        
+        ((fresh (car-l cdr-l o-left o-right)
+            (== l `(,car-l . ,cdr-l))
+            (window2-helpero car-l o-left)
+            (appendo o-left o-right o)
+            (flatmap-window2-helpero cdr-l o-right))))))
+
+(define map-shoveo (lambda (a l o)
+    (conde
+        ((== l '()) (== o '()))
+        ((fresh (car-l cdr-l car-o cdr-o)
+            (== l `(,car-l . ,cdr-l))
+            (== o `(,car-o . ,cdr-o))
+            (shoveo a car-l car-o)
+            (map-shoveo a cdr-l cdr-o))))))
+
+(define map-make-indexed-pairo (lambda (l x triples o)
+    (conde
+        ((== triples '()) (== o '()))
+        ((fresh (car-triples cdr-triples car-o cdr-o)
+            (== triples `(,car-triples . ,cdr-triples))
+            (== o `(,car-o . ,cdr-o))
+            (make-indexed-pairo l x car-triples car-o)
+            (map-make-indexed-pairo l x cdr-triples cdr-o))))))
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:10">10</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:13">13</a> and <a href="main.html#1:14">14</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.pl</strong> <a href="main.html#1:4">4</a>} +=</span>
+<pre class="prettyprint">
+flatmapWindow2Helper([], []).
+flatmapWindow2Helper([CarL|CdrL], O) :-
+    window2Helper(CarL, OLeft),
+    append(OLeft, ORight, O),
+    flatmapWindow2Helper(CdrL, ORight).
+    
+mapShove(_, [], []).
+mapShove(A, [CarL|CdrL], [CarO|CdrO]) :-
+    shove(A, CarL, CarO),
+    mapShove(A, CdrL, CdrO).
+    
+mapMakeIndexedPair(_, _, [], []).
+mapMakeIndexedPair(L, X, [CarTriples|CdrTriples], [CarO, CdrO]) :-
+    makeIndexedPair(L, X, CarTriples, CarO),
+    mapMakeIndexedPair(L, X, CdrTriples, CdrO).
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a> and <a href="main.html#1:16">16</a></p>
+
+
+</div>
+</div>
+<a name="1:12"><div class="section"><h4>12. Implementing flatmap</h4></a>
+<p>To demonstrate flatmap, we need a suitable relation between an object and a list. A number and its multiset of primes is a good candidate relation.
+Since this is just a sample, I will only consider the numbers 1 through 9.
+</p>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
+<pre class="prettyprint">
+(define prime-factorso (lambda (x primes)
+    (fresh (y)
+        (== y `(,x ,primes))
+        (conde
+            ((== y '(1 ())))
+            ((== y '(2 (2))))
+            ((== y '(3 (3))))
+            ((== y '(4 (2 2))))
+            ((== y '(5 (5))))
+            ((== y '(6 (2 3))))
+            ((== y '(7 (7))))
+            ((== y '(8 (2 2 2))))
+            ((== y '(9 (3 3))))))))
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:10">10</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:13">13</a> and <a href="main.html#1:14">14</a></p>
+
+
+</div>
+<p>Now we can write a flatmap function specialized for primeso.
+</p>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.mk.scm</strong> <a href="main.html#1:4">4</a>} +=</span>
+<pre class="prettyprint">
+(define flatmap-prime-factorso (lambda (l o)
+    (conde
+        ((== l '()) (== o '()))
+        ((fresh (car-l cdr-l o-left o-right)
+            (== l `(,car-l . ,cdr-l))
+            (prime-factorso car-l o-left)
+            (appendo o-left o-right o)
+            (flatmap-prime-factorso cdr-l o-right))))))
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:10">10</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:13">13</a> and <a href="main.html#1:14">14</a></p>
+
+
+</div>
+</div>
+<a name="1:13"><div class="section"><h4>13. K4 Example</h4></a>
 <p>The simplest example, the base case <span class="math">K_4</span>.
 </p>
 
@@ -409,17 +791,17 @@ function helloWorld() {
 (define k4-example-cbh '(
     (l o o r)))
 </pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:8">8</a> and <a href="main.html#1:9">9</a></p>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:10">10</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:12">12</a> and <a href="main.html#1:14">14</a></p>
 
 
 </div>
 </div>
-<a name="1:9"><div class="section"><h4>9. Appendix A: The Riffle Relation</h4></a>
+<a name="1:14"><div class="section"><h4>14. Appendix A: The Riffle Relation</h4></a>
 <p>Adapted from <a href="https://github.com/schreiberbrett/cool-relations/blob/main/the-riffle-relation.md">here</a>.
 </p>
 
 <div class="codeblock">
-<span class="codeblock_name">{The riffle relation <a href="main.html#1:9">9</a>}</span>
+<span class="codeblock_name">{The riffle relation <a href="main.html#1:14">14</a>}</span>
 <pre class="prettyprint">
 (define riffleo (lambda (a b o)
     (fresh (car-a cdr-a car-b cdr-b car-o cdr-o z0 z1)
@@ -459,15 +841,15 @@ function helloWorld() {
             (== b `(,z . ,w))
             (same-lengtho y w))))))
 </pre>
-<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:8">8</a> and <a href="main.html#1:8">8</a></p>
+<p class="seealso">Added to in sections <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:5">5</a>, <a href="main.html#1:7">7</a>, <a href="main.html#1:9">9</a>, <a href="main.html#1:10">10</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a>, <a href="main.html#1:12">12</a>, <a href="main.html#1:12">12</a> and <a href="main.html#1:13">13</a></p>
 
 
 </div>
 </div>
-<a name="1:10"><div class="section"><h4>10. Appendix B: immutable LinkedList implementation with constant-time, linkedList.Remove2Add1()</h4></a>
+<a name="1:15"><div class="section"><h4>15. Appendix B: immutable LinkedList implementation with constant-time, linkedList.Remove2Add1()</h4></a>
 
 <div class="codeblock">
-<span class="codeblock_name">{<strong>Remove2Add1Test.java</strong> <a href="main.html#1:10">10</a>}</span>
+<span class="codeblock_name">{<strong>Remove2Add1Test.java</strong> <a href="main.html#1:15">15</a>}</span>
 <pre class="prettyprint">
 public class Remove2Add1Test {
     public static void Main(String[] args) {
@@ -488,12 +870,12 @@ public class Remove2Add1Test {
 
 </div>
 </div>
-<a name="1:11"><div class="section"><h4>11. Appendix C: A translation of "proves" into Prolog</h4></a>
+<a name="1:16"><div class="section"><h4>16. Appendix C: A translation of "proves" into Prolog</h4></a>
 <p>Hopefully this makes benchmarking easier. I don't know why filter_cbs is taking so long.
 </p>
 
 <div class="codeblock">
-<span class="codeblock_name">{<strong>main.pl</strong> <a href="main.html#1:11">11</a>}</span>
+<span class="codeblock_name">{<strong>main.pl</strong> <a href="main.html#1:4">4</a>} +=</span>
 <pre class="prettyprint">
 riffle([], [], []).
 riffle([A|As], [], [A|As]).
@@ -607,34 +989,38 @@ abc_proof(Proof) :-
     abc_hypergraph(X),
     abc_cbs(Y),
     proves(X, Y, Proof).
-    
-my_filter(X) :-
-    filter_cbs([o, o, o, l, r], [
-        [l, o, o, o, l],
-        [l, o, o, o, r],
-        [l, r, o, o, o]
-    ], F).
 </pre>
-
+<p class="seealso">Added to in sections <a href="main.html#1:11">11</a>, <a href="main.html#1:11">11</a> and <a href="main.html#1:11">11</a></p>
 
 
 </div>
 </div>
-<a name="1:12"><div class="section"><h4>12. A translation of proveso into ramo for Javascript</h4></a>
+<a name="1:17"><div class="section"><h4>17. A translation of proveso into ramo for Javascript</h4></a>
 
 <div class="codeblock">
-<span class="codeblock_name">{<strong>main.ramo.js</strong> <a href="main.html#1:12">12</a>}</span>
+<span class="codeblock_name">{<strong>main.ramo.js</strong> <a href="main.html#1:17">17</a>}</span>
 <pre class="prettyprint">
 import  { run, Rel, conde, exist, eq, conso, nilo } from 'https://esm.sh/ramo';
 
-const appendo = Rel((xs, ys, zs) =&gt; conde(
-  [nilo(xs), eq(ys, zs)],
-  exist((a, d, res) =&gt; [
-    conso(a, d, xs),
-    conso(a, res, zs),
-    appendo(d, ys, res)
-  ])
-));
+const riffleo = Rel((a, b, o) =&gt;
+    exist((carA, cdrA, carB, cdrB, carO, cdrO, z0, z1) =&gt;
+        conde(
+            // If `a` and `b` are both empty, then the output is empty
+            [nilo(a), nilo(b), nilo(o)],
+            
+            // If `a` is non-empty and `b` is empty, then the output is equal to `a`.
+            [conso(carA, cdrA, a), nilo(b), eq(o, a)],
+            
+            // If `a` is empty and `b` is non-empty, then the output is equal to `b`.
+            [nilo(a), conso(carB, cdrB, b), eq(o, b)],
+            
+            // When both `a` and `b` are non-empty
+            [conso(carA, cdrA, a), conso(carB, cdrB, b), conso(carO, cdrO, o),
+                conde(
+                    [eq(carO, carA), eq(z0, cdrA), eq(z1, b)],
+                    [eq(carO, carB), eq(z0, a), eq(z1, cdrB)]),
+                    
+                riffleo(z0, z1, cdrO)])))
 
 const roleo = Rel((role, el, er, biclique, eo) =&gt; [
     exist((x) =&gt; [
@@ -646,9 +1032,134 @@ const roleo = Rel((role, el, er, biclique, eo) =&gt; [
             eq(x, ['v', 0, 1, 'o', 1]),
             eq(x, ['w', 1, 1, 'o', 1]),
             eq(x, ['o', 0, 0, 'o', 0]))])])
-            
-console.log(run()(q =&gt; exist((a, b, c, d, e) =&gt; [eq(q, [a, b, c, d, e]), roleo(a, b, c, d, e)])))
 
+
+const allRoleso = Rel((a, b, c, d, e) =&gt;
+    conde(
+        eq([a, b, c, d, e], [[], [], [], [], []]),
+        exist((carA, cdrA, carB, cdrB, carC, cdrC, carD, cdrD, carE, cdrE) =&gt; [
+            conso(carA, cdrA, a),
+            conso(carB, cdrB, b),
+            conso(carC, cdrC, c),
+            conso(carD, cdrD, d),
+            conso(carE, cdrE, e),
+            roleo(carA, carB, carC, carD, carE),
+            allRoleso(cdrA, cdrB, cdrC, cdrD, cdrE)])))
+            
+const proveso = Rel((hypergraph, bicliques, steps) =&gt;
+    conde(
+        [nilo(steps), anyLessThan3o(hypergraph)],
+        exist((step, restSteps, e1, e2, el, er, eo, restHyperedges, biclique, restBicliques, filteredBicliques, newHypergraph) =&gt; [
+            conso(step, restSteps, steps),
+
+            // Pick two hyperedges
+            riffleo([e1, e2], restHyperedges, hypergraph),
+            
+            // Order matters since one will be considered "left" and the other "right"
+            riffleo([el], [er], [e1, e2]),
+            
+            // Pick one biclique
+            riffleo([biclique], restBicliques, bicliques),
+            
+            // These hyperedges must be connected
+            allRoleso(step, el, er, biclique, eo),
+
+            filterBicliqueso(biclique, restBicliques, filteredBicliques),
+            
+            // Recur on the rest of the steps with the new hypergraph
+            conso(eo, restHyperedges, newHypergraph),
+            proveso(newHypergraph, filteredBicliques, restSteps)])))
+
+const lessThan3o = Rel((hyperedge) =&gt;
+    exist((n) =&gt; [
+        conde(
+            eq(n, ['z']),
+            eq(n, ['s', 'z']),
+            eq(n, ['s', 's', 'z'])),
+            
+        sizeo(hyperedge, n)]))
+            
+const anyLessThan3o = Rel((hypergraph) =&gt;
+    exist((hyperedge, restHyperedges) =&gt; [
+        conso(hyperedge, restHyperedges, hypergraph),
+        conde(
+            lessThan3o(hyperedge),
+            anyLessThan3o(restHyperedges))]))
+
+const sizeo = Rel((hyperedge, size) =&gt;
+    conde(
+        [nilo(hyperedge), eq(size, ['z'])],
+        exist((first, rest, sizeRec) =&gt; [
+            conso(first, rest, hyperedge),
+            conde(
+                [eq(first, 0), eq(size, sizeRec)],
+                [eq(first, 1), conso('s', sizeRec, size)],
+            ),
+            sizeo(rest, sizeRec)])))
+            
+            
+const filterBicliqueso = Rel((x, l, o) =&gt;
+    conde(
+        [nilo(l), nilo(o)],
+        exist((carL, cdrL, oRest) =&gt; [
+            conso(carL, cdrL, l),
+            conde(
+                [conso(carL, oRest, o),
+                    allDisjointo(x, carL)],
+                [eq(o, oRest),
+                    anyOverlapo(x, carL)]),
+            filterBicliqueso(x, cdrL, oRest)])))
+            
+const overlapo = Rel((u, v) =&gt;
+    exist((x) =&gt; [
+        eq(x, [u, v]),
+        conde(
+            eq(x, ['l', 'l']),
+            eq(x, ['l', 'r']),
+            eq(x, ['r', 'l']),
+            eq(x, ['r', 'r']))]))
+            
+const anyOverlapo = Rel((x, y) =&gt;
+    exist((carX, cdrX, carY, cdrY) =&gt; [
+        conso(carX, cdrX, x),
+        conso(carY, cdrY, y),
+        conde(
+            overlapo(carX, carY),
+            anyOverlapo(cdrX, cdrY))]))
+            
+const disjointo = Rel((u, v) =&gt;
+    conde(
+        eq(u, 'o'),
+        eq(v, 'o')))
+        
+const allDisjointo = Rel((x, y) =&gt;
+    conde(
+        [nilo(x), nilo(y)],
+        exist((carX, cdrX, carY, cdrY) =&gt; [
+            conso(carX, cdrX, x),
+            conso(carY, cdrY, y),
+            disjointo(carX, carY),
+            allDisjointo(cdrX, cdrY)])))
+            
+
+const abcHypergraph = [
+    [1, 0, 1, 1, 0, 0, 0, 0, 0],
+    [0, 1, 0, 0, 1, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 1, 1]]
+    
+const abcBicliques = [
+    ['l', 'r', 'o', 'o', 'o', 'o', 'o', 'o', 'o'],
+    ['o', 'o', 'o', 'o', 'o', 'l', 'r', 'o', 'o'],
+    // ...
+    ['o', 'o', 'l', 'l', 'l', 'l', 'r', 'o', 'o']]
+
+
+const k4Hypergraph = [
+    [1, 1, 1, 0],
+    [0, 1, 1, 1]]
+    
+const k4Bicliques = [
+    ['l', 'o', 'o', 'r']]
 
 </pre>
 
@@ -656,7 +1167,571 @@ console.log(run()(q =&gt; exist((a, b, c, d, e) =&gt; [eq(q, [a, b, c, d, e]), r
 
 </div>
 </div>
-<a name="1:13"><div class="section"><h4>13. Non-3-colorability and odd cycles</h4></a>
+<a name="1:18"><div class="section"><h4>18. A translation of the proves relation to Python and Typescript</h4></a>
+<p>Imports
+</p>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.py</strong> <a href="main.html#1:18">18</a>}</span>
+<pre class="prettyprint">
+from dataclasses import dataclass
+from typing import List, Optional, Tuple
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:20">20</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.ts</strong> <a href="main.html#1:18">18</a>}</span>
+<pre class="prettyprint">
+
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:20">20</a></p>
+
+
+</div>
+<p>Type declarations
+</p>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.py</strong> <a href="main.html#1:18">18</a>} +=</span>
+<pre class="prettyprint">
+Biclique = List[str] # List[Literal['l', 'r', 'o']]
+Hyperedge = List[str] # List[Literal['x', 'o']]
+ProofStep = List[str] # List[Literal['a', 'b', 'u', 'v', 'w', 'o']]
+Hypergraph = List[Hyperedge]
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:20">20</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.ts</strong> <a href="main.html#1:18">18</a>} +=</span>
+<pre class="prettyprint">
+type Biclique = Array&lt;('l' | 'r' | 'o')&gt;
+type Hyperedge = Array&lt;('x' | 'o')&gt;
+type ProofStep = Array&lt;('a' | 'b' | 'u' | 'v' | 'w' | 'o')&gt;
+type Hypergraph = Array&lt;Hyperedge&gt;
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:20">20</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.py</strong> <a href="main.html#1:18">18</a>} +=</span>
+<pre class="prettyprint">
+def any_overlap(a: Biclique, b: Biclique) -&gt; bool:
+    num_vertices = len(a[0])
+    
+    for v in range(num_vertices):
+        x = a[v] + b[v]
+        
+        if x == 'll' or x == 'lr' or x == 'rl' or x == 'rr':
+            return True
+
+    return False
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:20">20</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.ts</strong> <a href="main.html#1:18">18</a>} +=</span>
+<pre class="prettyprint">
+function anyOverlap(a: Biclique, b: Biclique): boolean {
+    const numVertices = a[0].length;
+    
+    for (let v = 0; v &lt; numVertices; v++) {
+        const x = a[v] + b[v]
+        
+        if (x === 'll' || x === 'lr' || x === 'rl' || x === 'rr') {
+            return true;
+        }
+    }
+    
+    return false;
+}
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:20">20</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.py</strong> <a href="main.html#1:18">18</a>} +=</span>
+<pre class="prettyprint">
+def any_edge_has_less_than_three(h: Hypergraph) -&gt; bool:
+    for hyperedge in h:
+        edge_size = 0
+        for vertex in hyperedge:
+            if vertex == 'x':
+                edge_size += 1
+
+        if edge_size &lt; 3:
+            return True
+            
+    return False
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:20">20</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.ts</strong> <a href="main.html#1:18">18</a>} +=</span>
+<pre class="prettyprint">
+function anyEdgeHasLessThanThree(h: Hypergraph): boolean {
+    for (let hyperedge of h) {
+        let edgeSize = 0;
+        for (let vertex of hyperedge) {
+            if (vertex === 'x') {
+                edgeSize += 1;
+            }
+        }
+        
+        if (edgeSize &lt; 3) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:20">20</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.py</strong> <a href="main.html#1:18">18</a>} +=</span>
+<pre class="prettyprint">
+def attempt_proof_step(
+    a: Hyperedge,
+    b: Hyperedge,
+    biclique: Biclique
+) -&gt; Optional[Tuple[ProofStep, Hyperedge]]:
+
+    num_vertices = len(a)
+    proof_step: ProofStep = []
+    new_h: Hyperedge = []
+    
+    for v in range(num_vertices):
+        x = a[v] + b[v] + biclique[v]
+
+        if x == 'xol':
+            proof_step.append('a')
+            new_h.append('o')
+
+        elif x == 'oxr':
+            proof_step.append('b')
+            new_h.append('o')
+                
+        elif x == 'xoo':
+            proof_step.append('u')
+            new_h.append('x')
+                
+        elif x == 'oxo':
+            proof_step.append('v')
+            new_h.append('x')
+                
+        elif x == 'xxo':
+            proof_step.append('w')
+            new_h.append('x')
+                
+        elif x == 'ooo':
+            proof_step.append('o')
+            new_h.append('o')
+                
+        else:
+            return None
+            
+    return (proof_step, new_h)
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:20">20</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.ts</strong> <a href="main.html#1:18">18</a>} +=</span>
+<pre class="prettyprint">
+function attemptProofStep(
+    a: Hyperedge,
+    b: Hyperedge,
+    biclique: Biclique
+): [ProofStep, Hyperedge] | null {
+    
+    const numVertices = a.length;
+    let proofStep: ProofStep = [];
+    let newH: Hyperedge = [];
+    
+    for (let v = 0; v &lt; numVertices; v++) {
+        const x = a[v] + b[v] + biclique[v];
+    
+        if (x === 'xol') {
+            proofStep.push('a');
+            newH.push('o');
+
+        } else if (x === 'oxr') {
+            proofStep.push('b');
+            newH.push('o');
+
+        } else if (x === 'xoo') {
+            proofStep.push('u');
+            newH.push('x');
+        
+        } else if (x === 'oxo') {
+            proofStep.push('v');
+            newH.push('x');
+        
+        } else if (x === 'xxo') {
+            proofStep.push('w');
+            newH.push('x');
+        
+        } else if (x === 'ooo') {
+            proofStep.push('o');
+            newH.push('o');
+        
+        } else {
+            return null;
+        }
+    }
+    
+    return [proofStep, newH];
+}
+
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:20">20</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.py</strong> <a href="main.html#1:18">18</a>} +=</span>
+<pre class="prettyprint">
+def remove2add1(h: Hypergraph, i: int, j: int, new_h: Hyperedge) -&gt; Hypergraph:
+    result = []
+    
+    for index in range(len(h)):
+        if index != i and index != j:
+            result.append(h[index])
+            
+    result.append(new_h)
+    return result
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:20">20</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.ts</strong> <a href="main.html#1:18">18</a>} +=</span>
+<pre class="prettyprint">
+function remove2add1(h: Hypergraph, i: number, j: number, newH: Hyperedge): Hypergraph {
+    let result = [];
+    
+    for (let index = 0; index &lt; h.length; index++) {
+        if (index !== i &amp;&amp; index !== j) {
+            result.push(h[index]);
+        }
+    }
+    
+    result.push(newH);
+    return result;
+}
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:20">20</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.py</strong> <a href="main.html#1:18">18</a>} +=</span>
+<pre class="prettyprint">
+def proves(h: Hypergraph, bicliques: List[Biclique]) -&gt; Optional[List[ProofStep]]:
+    num_vertices = len(h[0])
+
+    if any_edge_has_less_than_three(h):
+        return []
+    
+    # Any biclique between two hyperedges leads to a new proveable hypergraph
+    for i in range(len(h)):
+        for j in range(len(h)):
+            for biclique in bicliques:
+                if i != j:
+                    attempt = attempt_proof_step(h[i], h[j], biclique)
+
+                    if attempt is not None:
+                        proof_step, new_hyperedge = attempt
+
+                        proof_steps = proves(
+                            remove2add1(h, i, j, new_hyperedge),
+                            [x for x in bicliques if not any_overlap(biclique, x)]
+                        )
+
+                        if proof_steps is not None:
+                            return proof_steps + [proof_step]
+    
+    return None
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:20">20</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.ts</strong> <a href="main.html#1:18">18</a>} +=</span>
+<pre class="prettyprint">
+function proves(h: Hypergraph, bicliques: Array&lt;Biclique&gt;): (Array&lt;ProofStep&gt; | null) {
+    if (anyEdgeHasLessThanThree(h)) {
+        return [];
+    }
+
+    for (let i = 0; i &lt; h.length; i++) {
+        for (let j = 0; j &lt; h.length; j++) {
+            for (let biclique of bicliques) {
+                if (i !== j) {
+                    const attempt = attemptProofStep(h[i], h[j], biclique);
+                    
+                    if (attempt !== null) {
+                        const [proofStep, newHyperedge] = attempt;
+                        
+                        const proofSteps = proves(
+                            remove2add1(h, i, j, newHyperedge),
+                            bicliques.filter(x =&gt; !anyOverlap(x, biclique))
+                        );
+                        
+                        if (proofSteps !== null) {
+                            return proofSteps.concat([proofStep]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    return null;
+}
+
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:20">20</a></p>
+
+
+</div>
+</div>
+<a name="1:19"><div class="section"><h4>19. Extracting the Sperner family</h4></a>
+<p>We only need to deal with the smallest subsets, so we can create Sperner families. I do not know an efficient way to do thsi other than by pairwise enumeration.
+</p>
+<p>The algorithm only works if the hypergraph is simple, that is, there are no repeated edges. Otherwise two equal hyperedges would be subsets of each other and neither would be included.
+</p>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.py</strong> <a href="main.html#1:18">18</a>} +=</span>
+<pre class="prettyprint">
+def sperner_family(hypergraph: Hypergraph) -&gt; Hypergraph:
+    result = []
+    for i in range(len(hypergraph)):
+        any_subset = False
+        for j in range(len(hypergraph)):
+            if i != j and is_subset(hypergraph[j], hypergraph[i]):
+                any_subset = True
+                break
+
+        if not any_subset:
+            result.append(hypergraph[i])
+            
+    return result
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:20">20</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.ts</strong> <a href="main.html#1:18">18</a>} +=</span>
+<pre class="prettyprint">
+function spernerFamily(hypergraph: Hypergraph): Hypergraph {
+    let result = [];
+    for (let i = 0; i &lt; hypergraph.length; i++) {
+        let anySubset = false;
+        for (let j = 0; j &lt; hypergraph.length; j++) {
+            if (i !== j &amp;&amp; isSubset(hypergraph[j], hypergraph[i])) {
+                anySubset = true;
+                break;
+            }
+        }
+
+        if (!anySubset) {
+            result.push(hypergraph[i]);
+        }
+    }
+
+    return result;
+}
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:20">20</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.py</strong> <a href="main.html#1:18">18</a>} +=</span>
+<pre class="prettyprint">
+def is_subset(subset: Hyperedge, superset: Hyperedge) -&gt; bool:
+    num_vertices = len(subset)
+    
+    for i in range(num_vertices):
+        if subset[i] == 'x' and superset[i] == 'o':
+            return False
+            
+    return True
+    
+test = [
+    ['x', 'x', 'o', 'x', 'o'],
+    ['x', 'o', 'o', 'x', 'o'],
+    ['x', 'o', 'o', 'x', 'x']]
+    
+print(sperner_family(test));
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:20">20</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.ts</strong> <a href="main.html#1:18">18</a>} +=</span>
+<pre class="prettyprint">
+function isSubset(subset: Hyperedge, superset: Hyperedge): boolean {
+    const numVertices = subset.length;
+
+    for (let i = 0; i &lt; numVertices; i++) {
+        if (subset[i] === 'x' &amp;&amp; superset[i] === 'o') {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+const test = [
+    ['x', 'x', 'o', 'x', 'o'],
+    ['x', 'o', 'o', 'x', 'o'],
+    ['x', 'o', 'o', 'x', 'x']];
+    
+console.log(spernerFamily(test));
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:20">20</a></p>
+
+
+</div>
+</div>
+<a name="1:20"><div class="section"><h4>20. Detecting odd cycles</h4></a>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.py</strong> <a href="main.html#1:18">18</a>} +=</span>
+<pre class="prettyprint">
+k4_hypergraph: Hypergraph = [
+    ['x', 'x', 'x', 'o'],
+    ['o', 'x', 'x', 'x']]
+    
+k4_bicliques: List[Biclique] = [
+    ['l', 'o', 'o', 'r']]
+
+
+abc_hypergraph: Hypergraph = [
+    ['x', 'o', 'x', 'x', 'o', 'o', 'o', 'o', 'o'],
+    ['o', 'x', 'o', 'o', 'x', 'x', 'o', 'o', 'o'],
+    ['o', 'o', 'o', 'o', 'o', 'o', 'x', 'x', 'x']]
+    
+abc_bicliques: List[Biclique] = [
+    ['l', 'r', 'o', 'o', 'o', 'o', 'o', 'o', 'o'],
+    ['o', 'o', 'o', 'o', 'o', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'o', 'l', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'o', 'l', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'l', 'o', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'l', 'o', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'l', 'l', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'l', 'l', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'o', 'o', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'o', 'l', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'o', 'l', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'l', 'o', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'l', 'o', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'l', 'l', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'l', 'l', 'l', 'r', 'o', 'o']]
+    
+print(proves(abc_hypergraph, abc_bicliques))
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:19">19</a></p>
+
+
+</div>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>main.ts</strong> <a href="main.html#1:18">18</a>} +=</span>
+<pre class="prettyprint">
+const k4Hypergraph: Hypergraph = [
+    ['x', 'x', 'x', 'o'],
+    ['o', 'x', 'x', 'x']]
+    
+const k4Bicliques: Array&lt;Biclique&gt; = [
+    ['l', 'o', 'o', 'r']]
+
+const abcHypergraph: Hypergraph = [
+    ['x', 'o', 'x', 'x', 'o', 'o', 'o', 'o', 'o'],
+    ['o', 'x', 'o', 'o', 'x', 'x', 'o', 'o', 'o'],
+    ['o', 'o', 'o', 'o', 'o', 'o', 'x', 'x', 'x']]
+    
+const abcBicliques: Array&lt;Biclique&gt; = [
+    ['l', 'r', 'o', 'o', 'o', 'o', 'o', 'o', 'o'],
+    ['o', 'o', 'o', 'o', 'o', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'o', 'l', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'o', 'l', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'l', 'o', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'l', 'o', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'l', 'l', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'o', 'l', 'l', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'o', 'o', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'o', 'l', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'o', 'l', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'l', 'o', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'l', 'o', 'l', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'l', 'l', 'o', 'r', 'o', 'o'],
+    ['o', 'o', 'l', 'l', 'l', 'l', 'r', 'o', 'o']]
+    
+console.log(proves(abcHypergraph, abcBicliques))
+</pre>
+<p class="seealso">Added to in sections <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:18">18</a>, <a href="main.html#1:19">19</a> and <a href="main.html#1:19">19</a></p>
+
+
+</div>
+</div>
+<a name="1:21"><div class="section"><h4>21. Detecting odd cycles in a graph, in Javascript</h4></a>
+<p>Given a graph, return a Sperner hypergraph of its odd cycles, that is, don't include any odd cycles which are proper supersets if a smaller odd cycle exists.
+</p>
+<p>Start at vertex zero and visit all your neighbors 
+</p>
+
+<div class="codeblock">
+<span class="codeblock_name">{<strong>graph.js</strong> <a href="main.html#1:21">21</a>}</span>
+<pre class="prettyprint">
+
+function allOddCycles(g) {
+    
+
+}
+
+</pre>
+
+
+
+</div>
+</div>
+<a name="1:22"><div class="section"><h4>22. Non-3-colorability and odd cycles</h4></a>
 <p>Proving a graph <span class="math">G</span> is not 3-colorable involves operations on the odd cycles contained in the graph. Therefore it would be useful to collect a set of sets of vertices, where the outer set contains the inner set if and only if there is an odd cycle in <span class="math">G</span> containing exactly those vertices in the inner set.
 </p>
 <p>A hypergraph would be the most appropriate data structure for representing this set-of-sets since the innermost elements are vertices corresponding to vertices of the original graph <span class="math">G</span>. Let's call this an <strong>odd cycle hypergraph</strong> <span class="math">H</span> that can be generated from <span class="math">G</span>.
@@ -667,6 +1742,19 @@ console.log(run()(q =&gt; exist((a, b, c, d, e) =&gt; [eq(q, [a, b, c, d, e]), r
 </p>
 <p>An efficient representation of a hypergraph is to use a two-dimensional boolean array where the rows are hyperedges and the columns are vertices. Each cell  <span class="math">(e, v)</span> holds the value <code>true</code> if vertex <span class="math">v</span> is included in the hyper-edge <span class="math">e</span>, and <code>false</code> otherwise.
 </p>
+<p>@ Results that would disprove this non-3-colorability deduction system
+</p>
+<ol>
+<li><p>Is there a 4-critical graph (achieved by the Hajos construction) that does not have a proof string? That is, is this deduction system sound, but incomplete?
+</p>
+</li>
+<li><p>Is there a 4-critical graph that requires a hyperedge to be used twice?
+</p>
+</li>
+<li><p>Is there a 4-critical graph that requires a biclique to be used twice? That is, is the rearrangement lemma false?
+</p>
+</li>
+</ol>
 
 </div>
 <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.3.0/katex.min.css">
