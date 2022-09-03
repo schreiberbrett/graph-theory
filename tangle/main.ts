@@ -1,4 +1,21 @@
 
+function unriffle<T>(o: Array<T>): Array<[Array<T>, Array<T>]> {
+	if (o.length === 0) {
+		return [[[], []]];
+	}
+	
+	const [carO, ...cdrO] = o
+	
+	let result = new Array<[Array<T>, Array<T>]>();
+	
+	for (let [cdrL, cdrR] of unriffle(cdrO)) {
+		for (let [l, r] of [ [[carO, ...cdrL], cdrR], [cdrL, [carO, ...cdrR]] ]) {
+			result.push([l, r]);
+		}
+	}
+	
+	return result;
+}
 type Biclique = Array<('l' | 'r' | 'o')>
 type Hyperedge = Array<('x' | 'o')>
 type ProofStep = Array<('a' | 'b' | 'u' | 'v' | 'w' | 'o')>
@@ -7,11 +24,14 @@ function anyOverlap(a: Biclique, b: Biclique): boolean {
     const numVertices = a[0].length;
     
     for (let v = 0; v < numVertices; v++) {
-        const x = a[v] + b[v]
-        
-        if (x === 'll' || x === 'lr' || x === 'rl' || x === 'rr') {
-            return true;
-        }
+		if (
+			(a[v] === 'l' && b[v] === 'l') ||
+			(a[v] === 'l' && b[v] === 'r') ||
+			(a[v] === 'r' && b[v] === 'l') ||
+			(a[v] === 'r' && b[v] === 'r')
+		) {
+			return true;
+		}
     }
     
     return false;
@@ -119,7 +139,6 @@ function proves(h: Hypergraph, bicliques: Array<Biclique>): (Array<ProofStep> | 
     
     return null;
 }
-
 function spernerFamily(hypergraph: Hypergraph): Hypergraph {
     let result = [];
     for (let i = 0; i < hypergraph.length; i++) {
@@ -149,13 +168,6 @@ function isSubset(subset: Hyperedge, superset: Hyperedge): boolean {
     
     return true;
 }
-
-const test = [
-    ['x', 'x', 'o', 'x', 'o'],
-    ['x', 'o', 'o', 'x', 'o'],
-    ['x', 'o', 'o', 'x', 'x']];
-    
-console.log(spernerFamily(test));
 const k4Hypergraph: Hypergraph = [
     ['x', 'x', 'x', 'o'],
     ['o', 'x', 'x', 'x']]
@@ -184,6 +196,4 @@ const abcBicliques: Array<Biclique> = [
     ['o', 'o', 'l', 'l', 'o', 'l', 'r', 'o', 'o'],
     ['o', 'o', 'l', 'l', 'l', 'o', 'r', 'o', 'o'],
     ['o', 'o', 'l', 'l', 'l', 'l', 'r', 'o', 'o']]
-    
-console.log(proves(abcHypergraph, abcBicliques))
 

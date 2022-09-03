@@ -41,7 +41,7 @@
 (define proveso (lambda (hypergraph bicliques steps)
     (conde
         ((== steps '()) (any-less-than-3o hypergraph))
-        ((fresh (step rest-steps e1 e2 el er eo rest-hyperedges biclique rest-bicliques filtered-bicliques)
+        ((fresh (step rest-steps e1 e2 el er eo rest-hyperedges biclique rest-bicliques filtered-bicliques _a _b)
             (== steps `(,step . ,rest-steps))
             ;; Pick two hyperedges
             (riffleo `(,e1 ,e2) rest-hyperedges hypergraph)
@@ -51,6 +51,10 @@
             
             ;; Pick one biclique
             (riffleo `(,biclique) rest-bicliques bicliques)
+
+			;; The proof step must have an l and r (sometimes useful)
+			;; (riffleo '(l) _a step)
+			;; (riffleo '(r) _b step)
 
             ;; These hyperedges must be connected
             (all-roleso step el er biclique eo)
@@ -300,6 +304,16 @@
     (o o l l o l r o o)
     (o o l l l o r o o)
     (o o l l l l r o o)))
+    
+    
+(define failure-hypergraph '(
+	(1 1 1 0 0 0 0 0 0 0 0)
+	(0 0 0 1 1 1 0 0 0 0 0)
+	(0 0 0 0 0 0 1 1 1 1 1)))
+	
+(define failure-bicliques '(
+	(o o l r o o o o o o o)
+	(o o o o o l r o o o o)))
 (define is-zipper-listo (lambda (zipper-list list)
     (fresh (l x r)
         (== zipper-list `(,l ,x ,r))
