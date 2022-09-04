@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Set, TypeVar
+from typing import List, Optional, Tuple, Set, TypeVar, Dict
 
 T = TypeVar('T')
 def unriffle(o: List[T]) -> List[Tuple[List[T], List[T]]]:
@@ -16,11 +16,6 @@ def unriffle(o: List[T]) -> List[Tuple[List[T], List[T]]]:
 			(cdr_l, [car_o] + cdr_r)
 		]
 	]
-
-	
-	
-for x in unriffle(['a', 'b', 'c']):
-	print(x)
 Biclique = List[str] # List[Literal['l', 'r', 'o']]
 Hyperedge = List[str] # List[Literal['x', 'o']]
 ProofStep = List[str] # List[Literal['a', 'b', 'u', 'v', 'w', 'o']]
@@ -57,6 +52,30 @@ def odd_cycles(num_vertices: int, graph: List[List[int]]) -> Hypergraph:
 				seen.add(hyperedge_str)
 				result.append(hyperedge)
 
+	return result
+def all_bicliques(graph: List[List[bool]]) -> List[Biclique]:
+	num_vertices = len(graph)
+	result = []
+	ls_and_os_and_rs = unriffle([x for x in range(num_vertices)])
+	
+	for ls_and_os, rs in unriffle([x for x in range(num_vertices)]):
+		for ls, os, in unriffle(ls_and_os):
+			if (
+				len(ls) != 0 and
+				len(rs) != 0 and
+				is_biclique(l, r, graph)
+			):
+				biclique = ['o'] * num_vertices
+				
+				for l in ls:
+					biclique[l] = 'l'
+				
+				for r in rs:
+					biclique[r] = 'r'
+				
+				result.append(biclique)
+				
+	
 	return result
 def any_overlap(a: Biclique, b: Biclique) -> bool:
 	num_vertices = len(a[0])
@@ -132,31 +151,81 @@ def remove2add1(h: Hypergraph, i: int, j: int, new_h: Hyperedge) -> Hypergraph:
             
     result.append(new_h)
     return result
-def proves(h: Hypergraph, bicliques: List[Biclique]) -> Optional[List[ProofStep]]:
-    num_vertices = len(h[0])
+def venn_diagram(a: Hyperedge, b: Hyperedge) -> Tuple[List[int], List[int], List[int], List[int]]:
+	left, right, both, neither = [], [], [], []
+	
+	num_vertices = len(a)
+	
+	for i in range(num_vertices):
+		if a[i] == 'x' and b[i] == 'o':
+			left.append(i)
+			
+		if a[i] == 'o' and b[i] == 'x':
+			right.append(i)
+	
+		if a[i] == 'x' and b[i] == 'x':
+			both.append(i)
+			
+		if a[i] == 'o' and b[i] == 'o':
+			neither.append(i)
+			
+	return left, right, both, neither
+def is_biclique(us: List[int], vs: List[int], graph: List[List[bool]]) -> bool:
+	for u in us:
+		for v in vs:
+			if not graph[u][v]:
+				return False
+			
+	return True
+def proves(h: Hypergraph, graph: List[List[bool]]) -> Optional[List[ProofStep]]:
+	num_vertices = len(h[0])
 
-    if any_edge_has_less_than_three(h):
-        return []
-    
-    # Any biclique between two hyperedges leads to a new proveable hypergraph
-    for i in range(len(h)):
-        for j in range(len(h)):
-            for biclique in bicliques:
-                if i != j:
-                    attempt = attempt_proof_step(h[i], h[j], biclique)
+	if any_edge_has_less_than_three(h):
+		return []
 
-                    if attempt is not None:
-                        proof_step, new_hyperedge = attempt
+	# Any biclique between two hyperedges leads to a new proveable hypergraph
+	for i in range(len(h)):
+		for j in range(len(h)):
+			if i != j:
+				left, right, both, neither = venn_diagram(h[i], h[j])
 
-                        proof_steps = proves(
-                            remove2add1(h, i, j, new_hyperedge),
-                            [x for x in bicliques if not any_overlap(biclique, x)]
-                        )
+				ls = unriffle(left)
+				rs = unriffle(right)
 
-                        if proof_steps is not None:
-                            return proof_steps + [proof_step]
-    
-    return None
+				for l, _ in ls:
+					for r, _ in rs:
+						if (
+							len(l) != 0 and
+							len(r) != 0 and
+							is_biclique(l, r, graph)
+						):
+							nonoverlapping = [x
+								for x in h
+								if disjoint(x, h[i]) and disjoint(x, h[j])
+							]
+							
+							
+							# new_hyperedge = (h[i] \/ h[j]) - (l \/ r)
+							new_hyperedge = union(h[i], h[j])
+
+							for v in l:
+								new_hyperedge[v] = 'o'
+							
+							for v in r:
+								new_hyperedge[v] = 'o'
+								
+							new_graph = [[False] * num_vertices] * num_vertices
+							
+							for i in range(num_vertices):
+								for j in range(num_vertices):
+									if i in l or i in r or j in l or j in r:
+										new_graph[i][j] = False
+									else:
+										new_graph[i][j] = graph[i][j]
+
+							if proves(remove2add1(h, i, j, new_hyperedge) + new_hyperedge, new_graph):
+								return True
+	return False
 def unique(x: List[List[bool]]) -> List[List[bool]]:
 	found = set()
 	result = []
@@ -214,16 +283,26 @@ def is_subset(subset: Hyperedge, superset: Hyperedge) -> bool:
             
     return True
     
-
-g = 'JHO\MageEG?' # Grotzsch graph
-# g = 'ECfw'
-
-int_graph, num_vertices = decode(g)
-
-print(int_graph)
-
-for x in sperner_family(odd_cycles(num_vertices, int_graph)):
-	print(x)
+def disjoint(a: Hyperedge, b: Hyperedge) -> bool:
+	num_vertices = len(a)
+	
+	for i in range(num_vertices):
+		if a[i] == 'x' and b[i] == 'x':
+			return False
+			
+	return True
+	
+def union(a: Hyperedge, b: Hyperedge) -> bool:
+	num_vertices = len(a)
+	
+	result = []
+	for i in range(num_vertices):
+		if a[i] == 'x' or b[i] == 'x':
+			result.append('x')
+		else:
+			result.append('o')
+			
+	return result
 k4_hypergraph: Hypergraph = [
     ['x', 'x', 'x', 'o'],
     ['o', 'x', 'x', 'x']]
@@ -253,4 +332,26 @@ abc_bicliques: List[Biclique] = [
     ['o', 'o', 'l', 'l', 'o', 'l', 'r', 'o', 'o'],
     ['o', 'o', 'l', 'l', 'l', 'o', 'r', 'o', 'o'],
     ['o', 'o', 'l', 'l', 'l', 'l', 'r', 'o', 'o']]
+def to_adjacency_matrix(num_vertices: int, int_graph: Dict[int, List[int]]) -> List[List[bool]]:
+	result = []
+
+	for vertex in int_graph:
+		adj_list = [False] * num_vertices
+		for neighbor in int_graph[vertex]:
+			adj_list[neighbor] = True
+		
+		result.append(adj_list)
+		
+	return result
+			
+
+def run(graph6: str) -> bool:
+	int_graph, num_vertices = decode(graph6)
+	
+	h = sperner_family(odd_cycles(num_vertices, int_graph))
+
+	return proves(h, to_adjacency_matrix(num_vertices, int_graph))
+
+
+print(run('JHO\MageEG?')) # Grotzsch graph
 

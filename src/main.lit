@@ -689,11 +689,6 @@ def unriffle(o: List[T]) -> List[Tuple[List[T], List[T]]]:
 			(cdr_l, [car_o] + cdr_r)
 		]
 	]
-
-	
-	
-for x in unriffle(['a', 'b', 'c']):
-	print(x)
 ---
 
 TypeScript does not support list comprehensions, so it is transformed into a more traditional for-loop style.
@@ -1040,7 +1035,7 @@ Imports
 
 --- main.py
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Set, TypeVar
+from typing import List, Optional, Tuple, Set, TypeVar, Dict
 
 T = TypeVar('T')
 ---
@@ -1116,6 +1111,32 @@ def odd_cycles(num_vertices: int, graph: List[List[int]]) -> Hypergraph:
 				seen.add(hyperedge_str)
 				result.append(hyperedge)
 
+	return result
+---
+
+--- main.py +=
+def all_bicliques(graph: List[List[bool]]) -> List[Biclique]:
+	num_vertices = len(graph)
+	result = []
+	ls_and_os_and_rs = unriffle([x for x in range(num_vertices)])
+	
+	for ls_and_os, rs in unriffle([x for x in range(num_vertices)]):
+		for ls, os, in unriffle(ls_and_os):
+			if (
+				len(ls) != 0 and
+				len(rs) != 0 and
+				is_biclique(l, r, graph)
+			):
+				biclique = ['o'] * num_vertices
+				
+				for l in ls:
+					biclique[l] = 'l'
+				
+				for r in rs:
+					biclique[r] = 'r'
+				
+				result.append(biclique)
+	
 	return result
 ---
 
@@ -1367,7 +1388,7 @@ def remove2add1(h: Hypergraph, i: int, j: int, new_h: Hyperedge) -> Hypergraph:
 
 --- main.ts +=
 function remove2add1(h: Hypergraph, i: number, j: number, newH: Hyperedge): Hypergraph {
-    let result = [];
+    let result: Hypergraph = [];
     
     for (let index = 0; index < h.length; index++) {
         if (index !== i && index !== j) {
@@ -1394,32 +1415,118 @@ static void remove2add1(Hypergraph h, int i, int j, int num_hyperedges, Hyperedg
 }
 ---
 
+Venn diagram relationship
+
 --- main.py +=
-def proves(h: Hypergraph, bicliques: List[Biclique]) -> Optional[List[ProofStep]]:
-    num_vertices = len(h[0])
+def venn_diagram(a: Hyperedge, b: Hyperedge) -> Tuple[List[int], List[int], List[int], List[int]]:
+	left, right, both, neither = [], [], [], []
+	
+	num_vertices = len(a)
+	
+	for i in range(num_vertices):
+		if a[i] == 'x' and b[i] == 'o':
+			left.append(i)
+			
+		if a[i] == 'o' and b[i] == 'x':
+			right.append(i)
+	
+		if a[i] == 'x' and b[i] == 'x':
+			both.append(i)
+			
+		if a[i] == 'o' and b[i] == 'o':
+			neither.append(i)
+			
+	return left, right, both, neither
+---
 
-    if any_edge_has_less_than_three(h):
-        return []
-    
-    # Any biclique between two hyperedges leads to a new proveable hypergraph
-    for i in range(len(h)):
-        for j in range(len(h)):
-            for biclique in bicliques:
-                if i != j:
-                    attempt = attempt_proof_step(h[i], h[j], biclique)
+--- main.ts +=
+function venn_diagram(a: Hyperedge, b: Hyperedge): [Array<number>, Array<number>, Array<number>, Array<number>] {
+	let [left, right, both, neither] = [[], [], [], []];
+	
+	const numVertices = a.length;
+	
+	for (let i = 0; i < numVertices; i++) {
+		if (a[i] === 'x' && b[i] === 'o') {
+			left.push(i);
+		}
+	
+		if (a[i] === 'o' && b[i] === 'x') {
+			right.push(i);
+		}
+		
+		if (a[i] === 'x' && b[i] === 'x') {
+			both.push(i);
+		}
+		
+		if (a[i] === 'o' && b[i] === 'o') {
+			neither.push(i);
+		}
+	}
 
-                    if attempt is not None:
-                        proof_step, new_hyperedge = attempt
+	return [left, right, both, neither];
+}
+---
 
-                        proof_steps = proves(
-                            remove2add1(h, i, j, new_hyperedge),
-                            [x for x in bicliques if not any_overlap(biclique, x)]
-                        )
+--- main.py +=
+def is_biclique(us: List[int], vs: List[int], graph: List[List[bool]]) -> bool:
+	for u in us:
+		for v in vs:
+			if not graph[u][v]:
+				return False
+			
+	return True
+---
 
-                        if proof_steps is not None:
-                            return proof_steps + [proof_step]
-    
-    return None
+--- main.py +=
+def proves(h: Hypergraph, graph: List[List[bool]]) -> Optional[List[ProofStep]]:
+	num_vertices = len(h[0])
+
+	if any_edge_has_less_than_three(h):
+		return []
+
+	# Any biclique between two hyperedges leads to a new proveable hypergraph
+	for i in range(len(h)):
+		for j in range(len(h)):
+			if i != j:
+				left, right, both, neither = venn_diagram(h[i], h[j])
+
+				ls = unriffle(left)
+				rs = unriffle(right)
+
+				for l, _ in ls:
+					for r, _ in rs:
+						if (
+							len(l) != 0 and
+							len(r) != 0 and
+							is_biclique(l, r, graph)
+						):
+							nonoverlapping = [x
+								for x in h
+								if disjoint(x, h[i]) and disjoint(x, h[j])
+							]
+							
+							
+							# new_hyperedge = (h[i] \/ h[j]) - (l \/ r)
+							new_hyperedge = union(h[i], h[j])
+
+							for v in l:
+								new_hyperedge[v] = 'o'
+							
+							for v in r:
+								new_hyperedge[v] = 'o'
+								
+							new_graph = [[False] * num_vertices] * num_vertices
+							
+							for i in range(num_vertices):
+								for j in range(num_vertices):
+									if i in l or i in r or j in l or j in r:
+										new_graph[i][j] = False
+									else:
+										new_graph[i][j] = graph[i][j]
+
+							if proves(remove2add1(h, i, j, new_hyperedge) + new_hyperedge, new_graph):
+								return True
+	return False
 ---
 
 --- main.ts +=
@@ -1560,7 +1667,7 @@ def sperner_family(hypergraph: Hypergraph) -> Hypergraph:
 
 --- main.ts +=
 function spernerFamily(hypergraph: Hypergraph): Hypergraph {
-    let result = [];
+    let result: Hypergraph = [];
     for (let i = 0; i < hypergraph.length; i++) {
         let anySubset = false;
         for (let j = 0; j < hypergraph.length; j++) {
@@ -1589,16 +1696,26 @@ def is_subset(subset: Hyperedge, superset: Hyperedge) -> bool:
             
     return True
     
-
-g = 'JHO\MageEG?' # Grotzsch graph
-# g = 'ECfw'
-
-int_graph, num_vertices = decode(g)
-
-print(int_graph)
-
-for x in sperner_family(odd_cycles(num_vertices, int_graph)):
-	print(x)
+def disjoint(a: Hyperedge, b: Hyperedge) -> bool:
+	num_vertices = len(a)
+	
+	for i in range(num_vertices):
+		if a[i] == 'x' and b[i] == 'x':
+			return False
+			
+	return True
+	
+def union(a: Hyperedge, b: Hyperedge) -> bool:
+	num_vertices = len(a)
+	
+	result = []
+	for i in range(num_vertices):
+		if a[i] == 'x' or b[i] == 'x':
+			result.append('x')
+		else:
+			result.append('o')
+			
+	return result
 ---
 
 
@@ -1613,6 +1730,18 @@ function isSubset(subset: Hyperedge, superset: Hyperedge): boolean {
     }
     
     return true;
+}
+
+function hyperedgeOverlap(a: Hyperedge, b: Hyperedge): bool {
+	let numVertices = a.length;
+	
+	for (let i = 0; i < numVertices; i++) {
+		if (a[i] === 'x' && b[i] === 'x') {
+			return true;
+		}
+	}
+	
+	return false;
 }
 ---
 
@@ -1679,6 +1808,38 @@ const abcBicliques: Array<Biclique> = [
     ['o', 'o', 'l', 'l', 'l', 'l', 'r', 'o', 'o']]
 ---
 
+@s Running on examples
+
+--- main.py +=
+def to_adjacency_matrix(num_vertices: int, int_graph: Dict[int, List[int]]) -> List[List[bool]]:
+	result = []
+
+	for vertex in int_graph:
+		adj_list = [False] * num_vertices
+		for neighbor in int_graph[vertex]:
+			adj_list[neighbor] = True
+		
+		result.append(adj_list)
+		
+	return result
+			
+
+def run(graph6: str) -> bool:
+	int_graph, num_vertices = decode(graph6)
+	
+	h = sperner_family(odd_cycles(num_vertices, int_graph))
+
+	graph = to_adjacency_matrix(num_vertices, int_graph)
+	
+	bicliques = all_bicliques(graph)
+
+	return proves(h, bicliques)
+
+
+
+
+print(run('JHO\MageEG?')) # Grotzsch graph
+---
 
 @s Non-3-colorability and odd cycles
 Proving a graph $G$ is not 3-colorable involves operations on the odd cycles contained in the graph. Therefore it would be useful to collect a set of sets of vertices, where the outer set contains the inner set if and only if there is an odd cycle in $G$ containing exactly those vertices in the inner set.

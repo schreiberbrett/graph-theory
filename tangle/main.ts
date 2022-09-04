@@ -98,7 +98,7 @@ function attemptProofStep(
 }
 
 function remove2add1(h: Hypergraph, i: number, j: number, newH: Hyperedge): Hypergraph {
-    let result = [];
+    let result: Hypergraph = [];
     
     for (let index = 0; index < h.length; index++) {
         if (index !== i && index !== j) {
@@ -108,6 +108,31 @@ function remove2add1(h: Hypergraph, i: number, j: number, newH: Hyperedge): Hype
     
     result.push(newH);
     return result;
+}
+function venn_diagram(a: Hyperedge, b: Hyperedge): [Array<number>, Array<number>, Array<number>, Array<number>] {
+	let [left, right, both, neither] = [[], [], [], []];
+	
+	const numVertices = a.length;
+	
+	for (let i = 0; i < numVertices; i++) {
+		if (a[i] === 'x' && b[i] === 'o') {
+			left.push(i);
+		}
+	
+		if (a[i] === 'o' && b[i] === 'x') {
+			right.push(i);
+		}
+		
+		if (a[i] === 'x' && b[i] === 'x') {
+			both.push(i);
+		}
+		
+		if (a[i] === 'o' && b[i] === 'o') {
+			neither.push(i);
+		}
+	}
+
+	return [left, right, both, neither];
 }
 function proves(h: Hypergraph, bicliques: Array<Biclique>): (Array<ProofStep> | null) {
     if (anyEdgeHasLessThanThree(h)) {
@@ -140,7 +165,7 @@ function proves(h: Hypergraph, bicliques: Array<Biclique>): (Array<ProofStep> | 
     return null;
 }
 function spernerFamily(hypergraph: Hypergraph): Hypergraph {
-    let result = [];
+    let result: Hypergraph = [];
     for (let i = 0; i < hypergraph.length; i++) {
         let anySubset = false;
         for (let j = 0; j < hypergraph.length; j++) {
@@ -167,6 +192,18 @@ function isSubset(subset: Hyperedge, superset: Hyperedge): boolean {
     }
     
     return true;
+}
+
+function hyperedgeOverlap(a: Hyperedge, b: Hyperedge): bool {
+	let numVertices = a.length;
+	
+	for (let i = 0; i < numVertices; i++) {
+		if (a[i] === 'x' && b[i] === 'x') {
+			return true;
+		}
+	}
+	
+	return false;
 }
 const k4Hypergraph: Hypergraph = [
     ['x', 'x', 'x', 'o'],
