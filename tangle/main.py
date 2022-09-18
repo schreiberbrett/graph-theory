@@ -1,5 +1,6 @@
+from tqdm import tqdm
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Set, TypeVar, Dict
+from typing import List, Optional, Tuple, Set, TypeVar, Dict, Any
 
 T = TypeVar('T')
 def unriffle(o: List[T]) -> List[Tuple[List[T], List[T]]]:
@@ -20,9 +21,9 @@ Biclique = List[str] # List[Literal['l', 'r', 'o']]
 Hyperedge = List[str] # List[Literal['x', 'o']]
 ProofStep = List[str] # List[Literal['a', 'b', 'u', 'v', 'w', 'o']]
 Hypergraph = List[Hyperedge]
-def odd_paths(graph: List[List[int]], start: int, end: int) -> List[List[int]]:
-	paths = []
-	fringe = [(start, [])]
+def odd_paths(graph: Dict[int, List[int]], start: int, end: int) -> List[List[int]]:
+	paths: List[List[int]] = []
+	fringe: List[Tuple[int, List[int]]] = [(start, [])]
 
 	while len(fringe) > 0:
 		vertex, path = fringe.pop()
@@ -35,8 +36,19 @@ def odd_paths(graph: List[List[int]], start: int, end: int) -> List[List[int]]:
 				fringe.append((neighbor, path + [neighbor]))
 
 	return paths
-	
-def odd_cycles(num_vertices: int, graph: List[List[int]]) -> Hypergraph:
+
+def to_ints(e: Hyperedge) -> List[int]:
+	result: List[int] = []
+	for i in range(len(e)):
+		if e[i] == 'x':
+			result.append(i)
+			
+	return result
+		
+
+def odd_cycles(graph: Dict[int, List[int]]) -> Hypergraph:
+	num_vertices = len(graph)
+
 	result: Hypergraph = []
 	seen: Set[str] = set()
 
@@ -55,7 +67,7 @@ def odd_cycles(num_vertices: int, graph: List[List[int]]) -> Hypergraph:
 	return result
 def all_bicliques(graph: List[List[bool]]) -> List[Biclique]:
 	num_vertices = len(graph)
-	result = []
+	result: List[Biclique] = []
 	ls_and_os_and_rs = unriffle([x for x in range(num_vertices)])
 	
 	for ls_and_os, rs in unriffle([x for x in range(num_vertices)]):
@@ -74,7 +86,6 @@ def all_bicliques(graph: List[List[bool]]) -> List[Biclique]:
 					biclique[r] = 'r'
 				
 				result.append(biclique)
-				
 	
 	return result
 def any_overlap(a: Biclique, b: Biclique) -> bool:
@@ -143,7 +154,7 @@ def attempt_proof_step(
             
     return (proof_step, new_h)
 def remove2add1(h: Hypergraph, i: int, j: int, new_h: Hyperedge) -> Hypergraph:
-    result = []
+    result: Hypergraph = []
     
     for index in range(len(h)):
         if index != i and index != j:
@@ -175,13 +186,20 @@ def is_biclique(us: List[int], vs: List[int], graph: List[List[bool]]) -> bool:
 		for v in vs:
 			if not graph[u][v]:
 				return False
-			
+
 	return True
-def proves(h: Hypergraph, graph: List[List[bool]]) -> Optional[List[ProofStep]]:
+Proof = List[Tuple[Hyperedge, Hyperedge, Hyperedge]]
+
+def proves(h: Hypergraph, graph: List[List[bool]]) -> Optional[Proof]:
+	if len(h) == 0:
+		return None
+
 	num_vertices = len(h[0])
 
 	if any_edge_has_less_than_three(h):
 		return []
+		
+	
 
 	# Any biclique between two hyperedges leads to a new proveable hypergraph
 	for i in range(len(h)):
@@ -198,12 +216,7 @@ def proves(h: Hypergraph, graph: List[List[bool]]) -> Optional[List[ProofStep]]:
 							len(l) != 0 and
 							len(r) != 0 and
 							is_biclique(l, r, graph)
-						):
-							nonoverlapping = [x
-								for x in h
-								if disjoint(x, h[i]) and disjoint(x, h[j])
-							]
-							
+						):							
 							
 							# new_hyperedge = (h[i] \/ h[j]) - (l \/ r)
 							new_hyperedge = union(h[i], h[j])
@@ -213,21 +226,47 @@ def proves(h: Hypergraph, graph: List[List[bool]]) -> Optional[List[ProofStep]]:
 							
 							for v in r:
 								new_hyperedge[v] = 'o'
-								
-							new_graph = [[False] * num_vertices] * num_vertices
-							
-							for i in range(num_vertices):
-								for j in range(num_vertices):
-									if i in l or i in r or j in l or j in r:
-										new_graph[i][j] = False
-									else:
-										new_graph[i][j] = graph[i][j]
 
-							if proves(remove2add1(h, i, j, new_hyperedge) + new_hyperedge, new_graph):
-								return True
-	return False
+							# The new_graph is a copy of the graph except...
+							new_graph = [
+								[graph[i][j] for j in range(len(graph[i]))]
+								for i in range(len(graph))
+							]
+
+							# ...it discards any edges incident to the biclique
+							for i_ in range(num_vertices):
+								for j_ in range(num_vertices):
+									if (i_ in l) or (i_ in r) or (j_ in l) or (j_ in r):
+										new_graph[i_][j_] = False
+							
+							
+							new_h = []
+							for index in range(len(h)):
+								e = h[index]
+								if not (is_subset(new_hyperedge, e) or index == i or index == j):
+									new_h.append(e)
+								
+							new_h.append(new_hyperedge)
+							
+							result = proves(new_h, new_graph)
+							
+							if result is not None:
+								return [(h[i], h[j], new_hyperedge)] + result
+
+	return None
+	
+def print_proof(proof: Optional[Proof]) -> None:
+	if proof is None:
+		print('No proof')
+
+	for l, r, o in proof:
+		print('l:', to_ints(l))
+		print('r:', to_ints(r))
+		print('o:', to_ints(o))
+		print('---')
+
 def unique(x: List[List[bool]]) -> List[List[bool]]:
-	found = set()
+	found: Set[str] = set()
 	result = []
 	
 	for bool_list in x:
@@ -237,7 +276,7 @@ def unique(x: List[List[bool]]) -> List[List[bool]]:
 			result.append(bool_list)
 			
 	return result
-def decode(g6: str) -> Tuple[List[List[int]], int]:
+def decode(g6: str) -> Tuple[Dict[int, List[int]], int]:
 	def as_int(char):
 		return ord(char) - 63
 
@@ -261,6 +300,21 @@ def decode(g6: str) -> Tuple[List[List[int]], int]:
 			index += 1
 			
 	return graph, num_vertices
+
+# TODO
+def encode(int_graph: List[List[int]], num_vertices: int) -> str:
+	def to_char(i):
+		return chr(i + 63)
+		
+	index = 0
+	for i in range(num_vertices):
+		for j in range(i):
+			if j in int_graph[i]:
+				bits[index] = True
+			else:
+				bits[index] = False
+				
+			index += 1
 def sperner_family(hypergraph: Hypergraph) -> Hypergraph:
     result = []
     for i in range(len(hypergraph)):
@@ -292,7 +346,7 @@ def disjoint(a: Hyperedge, b: Hyperedge) -> bool:
 			
 	return True
 	
-def union(a: Hyperedge, b: Hyperedge) -> bool:
+def union(a: Hyperedge, b: Hyperedge) -> Hyperedge:
 	num_vertices = len(a)
 	
 	result = []
@@ -332,7 +386,8 @@ abc_bicliques: List[Biclique] = [
     ['o', 'o', 'l', 'l', 'o', 'l', 'r', 'o', 'o'],
     ['o', 'o', 'l', 'l', 'l', 'o', 'r', 'o', 'o'],
     ['o', 'o', 'l', 'l', 'l', 'l', 'r', 'o', 'o']]
-def to_adjacency_matrix(num_vertices: int, int_graph: Dict[int, List[int]]) -> List[List[bool]]:
+def to_adjacency_matrix(int_graph: Dict[int, List[int]]) -> List[List[bool]]:
+	num_vertices = len(int_graph)
 	result = []
 
 	for vertex in int_graph:
@@ -343,15 +398,186 @@ def to_adjacency_matrix(num_vertices: int, int_graph: Dict[int, List[int]]) -> L
 		result.append(adj_list)
 		
 	return result
-			
 
-def run(graph6: str) -> bool:
-	int_graph, num_vertices = decode(graph6)
+def to_int_graph(adj_matrix: List[List[bool]]) -> Dict[int, List[int]]:
+	num_vertices = len(adj_matrix[0])
 	
-	h = sperner_family(odd_cycles(num_vertices, int_graph))
+	return {v : [x for x in range(num_vertices) if adj_matrix[v][x]] for v in range(num_vertices)}
 
-	return proves(h, to_adjacency_matrix(num_vertices, int_graph))
+def three_color(int_graph: Dict[int, List[int]]) -> Optional[List[str]]:
+	return three_color_rec(int_graph, [])
+
+def three_color_rec(int_graph: Dict[int, List[int]], so_far: List[int]) -> Optional[List[str]]:
+	num_colored_vertices = len(so_far)
+	
+	if num_colored_vertices == len(int_graph):
+		return so_far
+	
+	v = num_colored_vertices
+	
+	neighbor_has_1 = False
+	neighbor_has_2 = False
+	neighbor_has_3 = False
+
+	for neighbor in int_graph[v]:
+		if neighbor < v: # if neighbor has been colored
+			if so_far[neighbor] == 1:
+				neighbor_has_1 = True
+				
+			if so_far[neighbor] == 2:
+				neighbor_has_2 = True
+				
+			if so_far[neighbor] == 3:
+				neighbor_has_3 = True
+
+	if not neighbor_has_1:
+		attempt = three_color_rec(int_graph, so_far + [1])
+		if attempt is not None:
+			return attempt
+			
+	if not neighbor_has_2:
+		attempt = three_color_rec(int_graph, so_far + [2])
+		if attempt is not None:
+			return attempt
+			
+	if not neighbor_has_3:
+		attempt = three_color_rec(int_graph, so_far + [3])
+		if attempt is not None:
+			return attempt
+			
+	return None
+		
+
+def run_proves(known_4chrom_graph6s: List[str]) -> None:
+	for graph6 in known_4chrom_graph6s:
+		int_graph, num_vertices = decode(graph6)
+		
+		odd_cycle_hypergraph = sperner_family(odd_cycles(int_graph))
+
+		graph = to_adjacency_matrix(int_graph)
+		
+		proves_result = proves(odd_cycle_hypergraph, graph)
+		
+		if proves_result is None:
+			print('Found an exception')
+			print(graph6)
+			break
 
 
-print(run('JHO\MageEG?')) # Grotzsch graph
+def run_both(graph6s: List[str]) -> None:
+	for graph6 in tqdm(graph6s):
+		int_graph, num_vertices = decode(graph6)
+		
+		three_color_result = three_color(int_graph)
+		
+		is_three_colorable = three_color_result is not None
+		
+		odd_cycle_hypergraph = sperner_family(odd_cycles(int_graph))
+
+		graph = to_adjacency_matrix(int_graph)
+		
+		proves_result = proves(odd_cycle_hypergraph, graph)
+		
+		is_not_three_colorable = proves_result is not None
+		
+		if is_three_colorable and is_not_three_colorable:
+			print('Both true')
+			print(graph6)
+			for step in proves_result:
+				print(step)
+			break
+			
+		elif not is_three_colorable and not is_not_three_colorable:
+			print('Both false')
+			print(graph6)
+			break
+
+
+moser_spindle: Dict[int, List[int]] = {
+	0: [1, 2, 6],
+	1: [0, 2, 3],
+	2: [0, 1, 3],
+	3: [1, 2, 4, 5],
+	4: [3, 5, 6],
+	5: [3, 4, 6],
+	6: [0, 4, 5]
+}
+
+triple_moser_spindle: Dict[int, List[int]] = {
+	0: [1, 2, 9],
+	1: [0, 2, 3],
+	2: [0, 1, 3],
+	3: [1, 2, 4, 5],
+	4: [3, 5, 6],
+	5: [3, 4, 6],
+	6: [4, 5, 7, 8],
+	7: [6, 8, 9],
+	8: [6, 7, 9],
+	9: [0, 7, 8]
+}
+
+quad_moser_spindle: Dict[int, List[int]] = {
+	0: [1, 2, 12],
+	1: [0, 2, 3],
+	2: [0, 1, 3],
+	3: [1, 2, 4, 5],
+	4: [3, 5, 6],
+	5: [3, 4, 6],
+	6: [4, 5, 7, 8],
+	7: [6, 8, 9],
+	8: [6, 7, 9],
+	9: [7, 8, 10, 11],
+	10: [9, 11, 12],
+	11: [9, 10, 12],
+	12: [0, 10, 11]
+}
+
+import sys
+import time
+
+
+odd_cycle_hypergraph = sperner_family(odd_cycles(triple_moser_spindle))
+
+print('Odd cycles:')
+for edge in odd_cycle_hypergraph:
+	print(to_ints(edge))
+print()
+
+graph = to_adjacency_matrix(triple_moser_spindle)
+
+proof = proves(odd_cycle_hypergraph, graph)
+
+print_proof(proof)
+
+for i in range(5):
+	sys.stdout.write('\a')
+	sys.stdout.flush()
+	time.sleep(1)
+
+# gs = []
+# with open('src/tf_graphs_15v_4chrom-crit.g6') as file:
+# 	for graph6 in file:
+# 		gs.append(graph6)
+
+# run_proves(['JHO\MageEG?'])
+Expr = Union[Val[T], Op[T]]
+
+@dataclass(frozen=True)
+class Val(Generic[T]):
+	val: T
+	
+@dataclass(frozen=True)
+class Op(Generic[T]):
+	l: Expr[T]
+	r: Expr[T]
+	
+
+def solve(q: Set[T], op: Callable[[T, T], Set[T]], y: T) -> Optional[Expr[T]]:
+	if y in q:
+		return Val(y)
+		
+	for x in q:
+		
+	pass
+
 

@@ -1,6 +1,6 @@
 build_artifacts/*
 result/*
-
+.mypy_cache/*
 
 Graph
 Graph.hi

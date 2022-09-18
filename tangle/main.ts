@@ -134,36 +134,6 @@ function venn_diagram(a: Hyperedge, b: Hyperedge): [Array<number>, Array<number>
 
 	return [left, right, both, neither];
 }
-function proves(h: Hypergraph, bicliques: Array<Biclique>): (Array<ProofStep> | null) {
-    if (anyEdgeHasLessThanThree(h)) {
-        return [];
-    }
-
-    for (let i = 0; i < h.length; i++) {
-        for (let j = 0; j < h.length; j++) {
-            for (let biclique of bicliques) {
-                if (i !== j) {
-                    const attempt = attemptProofStep(h[i], h[j], biclique);
-                    
-                    if (attempt !== null) {
-                        const [proofStep, newHyperedge] = attempt;
-                        
-                        const proofSteps = proves(
-                            remove2add1(h, i, j, newHyperedge),
-                            bicliques.filter(x => !anyOverlap(x, biclique))
-                        );
-                        
-                        if (proofSteps !== null) {
-                            return proofSteps.concat([proofStep]);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    return null;
-}
 function spernerFamily(hypergraph: Hypergraph): Hypergraph {
     let result: Hypergraph = [];
     for (let i = 0; i < hypergraph.length; i++) {
