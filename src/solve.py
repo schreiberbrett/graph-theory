@@ -7,6 +7,7 @@ A = TypeVar('A', bound=Hashable)
 EdgeSet = FrozenSet[Tuple[int, int]]
 Hyperedge = FrozenSet[int]
 Hypergraph = FrozenSet[Hyperedge]
+Biclique = Tuple[Hyperedge, Hyperedge]
 AdjacencyList = Dict[int, List[int]]
 
 def main():
@@ -22,13 +23,13 @@ def determine(four_critical_g6s: List[str]) -> Optional[str]:
 	for g6 in tqdm(four_critical_g6s):
 		adjacency_list = decode(g6)
 		graph: EdgeSet = convert(adjacency_list)
-		hypergraph: Hypergraph = odd_cycles(adjacency_list)
+		hypergraph: Hypergraph = sperner_family(odd_cycles(adjacency_list))
 		
-		not_four_colorable, paths = solve(graph, hypergraph)
+		not_three_colorable, paths = solve(graph, hypergraph)
 
 		print(paths)
 
-		if not not_four_colorable:
+		if not not_three_colorable:
 			print('Found an exception:', four_critical_g6s)
 
 def decode(g6: str) -> AdjacencyList:
@@ -72,6 +73,7 @@ def odd_cycles(graph: AdjacencyList) -> Hypergraph:
 					fringe.append((neighbor, path + [neighbor]))
 
 		return paths
+
 	result: List[Hyperedge] = []
 	seen: Set[Hyperedge] = set()
 
@@ -103,8 +105,22 @@ def solve(graph: EdgeSet, hypergraph: Hypergraph) -> Tuple[bool, int]:
 			return True, n
 	
 	return False, n
-	
-def bfs(neighbors_of: Callable[[A], List[A]], start: A) -> Generator[A, None, None]:
+
+def dfs(neighbors_of: Callable[[A], Generator[A, None, None]], start: A) -> Generator[A, None, None]:
+	seen: Set[A] = set([start])
+	stack: List[A] = [start]
+
+	while len(stack) > 0:
+		vertex = stack.pop()
+
+		yield vertex
+
+		for neighbor in neighbors_of(vertex):
+			if neighbor not in seen:
+				seen.add(neighbor)
+				stack.append(neighbor)
+
+def bfs(neighbors_of: Callable[[A], Generator[A, None, None]], start: A) -> Generator[A, None, None]:
 	seen: Set[A] = set([start])
 	queue: Deque[A] = deque([start])
 	
@@ -118,7 +134,7 @@ def bfs(neighbors_of: Callable[[A], List[A]], start: A) -> Generator[A, None, No
 				seen.add(neighbor)
 				queue.append(neighbor)
 				
-def run(x: Tuple[EdgeSet, Hypergraph]) -> List[Tuple[EdgeSet, Hypergraph]]:
+def run(x: Tuple[EdgeSet, Hypergraph]) -> Generator[Tuple[EdgeSet, Hypergraph], None, None]:
 	graph, hypergraph = x
 	
 	def is_biclique(l: Set[int], r: Set[int]) -> bool:
@@ -140,8 +156,6 @@ def run(x: Tuple[EdgeSet, Hypergraph]) -> List[Tuple[EdgeSet, Hypergraph]]:
 							
 		return result
 		
-		
-	result: List[Tuple[EdgeSet, Hypergraph]] = []
 	for e1, e2 in itertools.combinations(hypergraph, 2):
 		for e3, used in xi(e1, e2):
 			new_graph = frozenset((u, v) for (u, v) in graph if u not in used and v not in used)
@@ -151,10 +165,8 @@ def run(x: Tuple[EdgeSet, Hypergraph]) -> List[Tuple[EdgeSet, Hypergraph]]:
 			new_hypergraph.remove(e2)
 			new_hypergraph.add(e3)
 			
-			result.append((new_graph, frozenset(new_hypergraph)))
-			
-	return result
-	
+			yield new_graph, frozenset(new_hypergraph)
+				
 def has_edge(graph: EdgeSet, u: int, v: int) -> bool:
 	u1, v1 = min(u, v), max(u, v)
 	return (u1, v1) in graph
@@ -205,6 +217,26 @@ def venn_diagram(e1: FrozenSet[A], e2: FrozenSet[A]) -> Tuple[Set[A], Set[A], Se
 		
 	return l, common, r
 
+def sperner_family(hypergraph: Hypergraph) -> Hypergraph:
+	result: List[Hyperedge] = []
+
+	for e1 in hypergraph:
+		any_subset = False
+		for e2 in hypergraph:
+			if e1 == e2:
+				continue
+
+			if e2.issubset(e1):
+				any_subset = True
+				break
+		
+		if not any_subset:
+			result.append(e1)
+
+	return frozenset(result)
+		
+
+
 def make_hypergraph(l: List[List[int]]) -> Hypergraph:
 	return frozenset(
 		frozenset(x)
@@ -212,6 +244,59 @@ def make_hypergraph(l: List[List[int]]) -> Hypergraph:
 	)
 
 '''
+def start_search(graph: EdgeSet, hypergraph: Hypergraph) -> bool:
+	return search(graph, hypergraph, set())
+
+def search(graph: EdgeSet, hypergraph: Hypergraph, do_not_use: Set[Tuple[Hyperedge, Biclique, Hyperedge]]) -> bool:
+	def is_biclique(l: Set[int], r: Set[int]) -> bool:
+		return all(has_edge(graph, x, y) for x in l for y in r)
+		
+	def xi(e1: Hyperedge, e2: Hyperedge) -> List[Tuple[Hyperedge, Biclique]]:
+		b1, common, b2 = venn_diagram(e1, e2)
+		
+		result: List[Tuple[Hyperedge, Biclique]] = []
+		
+		for i1, o1 in unriffle(b1):
+			if len(i1) > 0:
+				for i2, o2 in unriffle(b2):
+					if len(i2) > 0:
+						if is_biclique(i1, i2):
+							e3 = frozenset(itertools.chain(o1, o2, common))
+							result.append((e3, (frozenset(i1), frozenset(i2))))
+							
+		return result
+	
+	my_do_not_use = do_not_use.copy()
+
+	for e1, e2 in itertools.combinations(hypergraph, 2):
+		for e3, (i1, i2) in xi(e1, e2):
+			if (e1, (i1, i2), e2) in my_do_not_use:
+				continue
+		
+			new_graph = frozenset(
+				(u, v)
+				for (u, v) in graph 
+				if u not in i1 and u not in i2 and v not in i1 and v not in i2
+			)
+			
+			new_hypergraph_mutable = set(hypergraph)
+			new_hypergraph_mutable.remove(e1)
+			new_hypergraph_mutable.remove(e2)
+			new_hypergraph_mutable.add(e3)
+			
+			new_hypergraph = frozenset(new_hypergraph_mutable)
+			
+			rec = search(new_graph, new_hypergraph, my_do_not_use)
+			
+			if rec:
+				return True
+			else:
+				my_do_not_use.add((e1, (i1, i2), e2))
+				my_do_not_use.add((e2, (i2, i1), e1))
+
+	return False
+'''
+
 graph = frozenset([
 	(0, 15),
 	(0, 5),
@@ -242,7 +327,7 @@ hypergraph = make_hypergraph([
 	[7, 9, 10],
 	[12, 11, 2]
 ])
-'''
+
 	
 
 if __name__ == '__main__':

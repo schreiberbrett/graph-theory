@@ -1,4 +1,4 @@
-import qualified Data.Map as Map
+,'oimport qualified Data.Map as Map
 import Data.Map (Map)
 
 import qualified Data.Set as Set
