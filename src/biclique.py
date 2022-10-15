@@ -190,7 +190,7 @@ def main():
     nproc = multiprocessing.cpu_count()
 
     with multiprocessing.Pool(processes=nproc) as pool:
-        for result, graph6 in tqdm(pool.imap_unordered(decide3, gs)):
+        for result, graph6 in tqdm(pool.imap_unordered(decide3, gs), total=len(gs)):
             if result == False:
                 print('Found an exception:', graph6)
                 pool.terminate()
